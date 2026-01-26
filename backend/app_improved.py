@@ -1,4 +1,10 @@
 # app_improved.py
+import sys
+import os
+# Hack for Render: Ensure current directory is in sys.path so sibling imports work
+# regardless of start command (uvicorn backend.app vs cd backend && uvicorn app)
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import threading
 import uuid
 from typing import Optional, Dict, Any, List, Tuple
