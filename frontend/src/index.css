@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* White/Green Sustainability Theme - HIGH CONTRAST */
+    --background: 0 0% 100%;
+    /* White */
+    --foreground: 222.2 84% 4.9%;
+    /* Dark Slate - almost black */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* Primary: Emerald Green (Sustainability) - Darkened for better contrast on white */
+    --primary: 158 58% 32%;
+    /* Darker Emerald */
+    --primary-foreground: 355.7 100% 99%;
+
+    --secondary: 158 40% 90%;
+    /* Light Green Background for secondary buttons */
+    --secondary-foreground: 158 58% 25%;
+    /* Dark Green Text */
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 40%;
+    /* Darker muted text for readability */
+
+    --accent: 142 69% 94%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 85%;
+    /* Darker border */
+    --input: 214.3 31.8% 85%;
+    --ring: 158 58% 32%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Slightly adjusted for consistency, though user is focusing on light mode */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 158 58% 45%;
+    /* Lighter emerald for dark mode */
+    --primary-foreground: 144.9 80.4% 10%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 142.4 71.8% 29.2%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    /* Changed from bg-brand-navy-900 to white/gray */
+    @apply bg-slate-50 text-slate-900 antialiased font-sans selection:bg-emerald-500/30 selection:text-emerald-700;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    /* Changed from text-slate-50 to text-slate-900 */
+    @apply text-slate-900 font-bold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .glass {
+    /* Light mode glass: White with shadow */
+    @apply bg-white/70 backdrop-blur-md border border-slate-200/50 shadow-lg;
+  }
+
+  .glass-card {
+    /* Light mode card: White with shadow */
+    @apply bg-white/60 backdrop-blur-sm border border-slate-200/50 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300;
+  }
+
+  .text-gradient {
+    /* Green gradient */
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-500;
+  }
+
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-yellow-600 to-amber-500;
+  }
+
+  /* Utilities for brand colors mapped to Tailwind colors for ease if needed */
+  .bg-brand-navy-900 {
+    @apply bg-slate-50;
+  }
+
+  /* Override old navy backgrounds */
+  .bg-brand-navy-800 {
+    @apply bg-white;
+  }
+
+  .text-brand-teal-500 {
+    @apply text-emerald-600;
+  }
+
+  .bg-brand-teal-500 {
+    @apply bg-emerald-600 text-white;
+  }
+
+  .hover\:bg-brand-teal-400:hover {
+    @apply hover:bg-emerald-500;
+  }
+
+  .border-brand-teal-500 {
+    @apply border-emerald-500;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-100;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full hover:bg-slate-400;
+  }
+}

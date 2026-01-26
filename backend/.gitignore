@@ -1,0 +1,10 @@
+# Large ML artifacts
+models/
+*.pth
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
