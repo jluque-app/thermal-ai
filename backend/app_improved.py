@@ -13,23 +13,53 @@ import time
 import hmac
 import hashlib
 
+import sys
+import os
+import json
+import base64
+import io
+import time
+import logging
+import uuid
+import shutil
 import requests
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Dict, List, Any, Union
+from pathlib import Path
+
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Header, Depends, Request, Body
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, EmailStr
+
+# -----------------------------
+# Optional ML Imports (Handle Vercel Limits)
+# -----------------------------
+try:
+    import cv2
+    import torch
+    import torchvision.transforms as transforms
+    from segment_anything import sam_model_registry, SamAutomaticMaskGenerator
+    ML_AVAILABLE = True
+except ImportError:
+    print("WARNING: ML libraries (torch/cv2/segment_anything) not found. Running in LITE mode.")
+    ML_AVAILABLE = False
+    cv2 = None
+    torch = None
+    transforms = None
+    sam_model_registry = None
+    SamAutomaticMaskGenerator = None
 
 import numpy as np
-from PIL import Image, ImageDraw
-
-# Try to import OpenCV. If unavailable, we'll gracefully fall back to simple resize.
-try:
-    import cv2  # type: ignore
-    HAVE_CV2 = True
-except Exception:
-    cv2 = None  # type: ignore
-    HAVE_CV2 = False
-
-
-from fastapi import FastAPI, File, UploadFile, Form, Request, Body
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image, ImageDraw, ImageFont
+import openai
+import stripe
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from docx import Document
+from pptx import Presentation
+from pptx.util import Inches, Pt
 
 from pdf_endpoint import router as pdf_router
 from docx_endpoint import router as docx_router
@@ -234,6 +264,28 @@ def _resize_max(img: Image.Image, max_side: int = 1024) -> Image.Image:
     new_h = max(1, int(round(h * scale)))
     return img.resize((new_w, new_h))
 
+#    # -----------------------------------------------
+    # 2. LOAD & PROCESS IMAGES
+    # -----------------------------------------------
+    
+    # Check if ML is available
+    if not ML_AVAILABLE:
+        # Return a mock response or error if ML libs are missing (Vercel LITE mode)
+        # For now, we'll return a basic mock so the app doesn't crash
+        print("Analyze called but ML_AVAILABLE is False. Returning mock.")
+        return JSONResponse(content={
+            "status": "success",
+            "mock": True,
+            "message": "AI analysis unavailable in this deployment (LITE mode).",
+            "analysis_result": {
+                "summary": "AI processing is disabled in this environment.",
+                "issues": []
+            },
+            "artifacts": {}
+        })
+
+    thermal_bytes = await thermal_image.read()
+    rgb_bytes = await rgb_image.read()
 # --------------------------------------------------
 # Thermal → RGB registration helpers (cv2-based)
 # --------------------------------------------------

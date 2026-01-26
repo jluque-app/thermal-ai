@@ -4,19 +4,13 @@ uvicorn[standard]==0.30.6
 python-multipart==0.0.12
 pillow==10.4.0
 numpy==1.26.4
-opencv-python-headless==4.10.0.84
 requests==2.32.3
-gdown==5.2.0
-reportlab==4.2.5
-
-# CPU-only PyTorch (smaller than CUDA wheels)
---extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.3.1
-torchvision==0.18.1
+# opencv-python-headless==4.10.0.84 # Too large for Vercel
+# torch==2.3.1 # Too large for Vercel
+# torchvision==0.18.1 # Too large for Vercel
 python-pptx==0.6.23
 lxml==5.2.2
 openai>=1.40.0
 email-validator
 psycopg2-binary==2.9.*
 stripe
-psycopg2-binary
