@@ -769,8 +769,10 @@ def _db_connect():
             import psycopg2  # type: ignore
             conn = psycopg2.connect(DATABASE_URL)
             return conn, "postgres"
+        except ImportError:
+            print("WARN: psycopg2 not found. Postgres unavailable, falling back to sqlite.")
         except Exception as e:
-            print("WARN: Postgres unavailable, falling back to sqlite:", repr(e))
+            print(f"WARN: Postgres connection failed: {e}, falling back to sqlite.")
 
     import sqlite3
     db_path = os.getenv("SQLITE_FALLBACK_PATH", "/tmp/thermalai_billing.sqlite")
