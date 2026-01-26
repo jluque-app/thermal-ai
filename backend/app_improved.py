@@ -302,31 +302,6 @@ def _resize_max(img: Image.Image, max_side: int = 1024) -> Image.Image:
     new_h = max(1, int(round(h * scale)))
     return img.resize((new_w, new_h))
 
-#    # -----------------------------------------------
-    # 2. LOAD & PROCESS IMAGES
-    # -----------------------------------------------
-    
-    # Check if ML/Image libs are available
-    if not ML_AVAILABLE or not IMAGE_LIBS_AVAILABLE:
-        # Return a mock response or error if ML libs are missing (Vercel LITE mode)
-        msg = "AI analysis unavailable."
-        if not IMAGE_LIBS_AVAILABLE:
-            msg += " (Image libs missing)"
-            
-        print(f"Analyze called but libraries missing. Returning mock. ML={ML_AVAILABLE}, IMG={IMAGE_LIBS_AVAILABLE}")
-        return JSONResponse(content={
-            "status": "success",
-            "mock": True,
-            "message": msg,
-            "analysis_result": {
-                "summary": "AI processing is disabled in this environment.",
-                "issues": []
-            },
-            "artifacts": {}
-        })
-
-    thermal_bytes = await thermal_image.read()
-    rgb_bytes = await rgb_image.read()
 # --------------------------------------------------
 # Thermal → RGB registration helpers (cv2-based)
 # --------------------------------------------------
@@ -1572,6 +1547,25 @@ async def analyze(
     include_overlay_base64: str = Form(default="true"),
     auto_register: str = Form(default="true"),  # NEW: allow disabling registration if needed
 ):
+    # Check if ML/Image libs are available
+    if not ML_AVAILABLE or not IMAGE_LIBS_AVAILABLE:
+        # Return a mock response if ML libs are missing (Vercel LITE mode)
+        msg = "AI analysis unavailable."
+        if not IMAGE_LIBS_AVAILABLE:
+            msg += " (Image libs missing)"
+            
+        print(f"Analyze called but libraries missing. Returning mock. ML={ML_AVAILABLE}, IMG={IMAGE_LIBS_AVAILABLE}")
+        return JSONResponse(content={
+            "status": "success",
+            "mock": True,
+            "message": msg,
+            "analysis_result": {
+                "summary": "AI processing is disabled in this environment.",
+                "issues": []
+            },
+            "artifacts": {}
+        })
+
     if SEG_MODEL is None:
         return JSONResponse(status_code=503, content={"error": "Model not loaded yet. Please retry in a few seconds."})
 
