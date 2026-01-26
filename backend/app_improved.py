@@ -51,8 +51,23 @@ except ImportError:
     sam_model_registry = None
     SamAutomaticMaskGenerator = None
 
-import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+    SamAutomaticMaskGenerator = None
+
+# -----------------------------
+# Core Image Libs (Made Optional for Vercel "Ultra-Lite")
+# -----------------------------
+try:
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFont
+    IMAGE_LIBS_AVAILABLE = True
+except ImportError:
+    print("WARNING: Numpy/PIL not found. Image processing disabled.")
+    IMAGE_LIBS_AVAILABLE = False
+    np = None
+    Image = None
+    ImageDraw = None
+    ImageFont = None
+
 import openai
 import stripe
 from reportlab.pdfgen import canvas
@@ -268,15 +283,18 @@ def _resize_max(img: Image.Image, max_side: int = 1024) -> Image.Image:
     # 2. LOAD & PROCESS IMAGES
     # -----------------------------------------------
     
-    # Check if ML is available
-    if not ML_AVAILABLE:
+    # Check if ML/Image libs are available
+    if not ML_AVAILABLE or not IMAGE_LIBS_AVAILABLE:
         # Return a mock response or error if ML libs are missing (Vercel LITE mode)
-        # For now, we'll return a basic mock so the app doesn't crash
-        print("Analyze called but ML_AVAILABLE is False. Returning mock.")
+        msg = "AI analysis unavailable."
+        if not IMAGE_LIBS_AVAILABLE:
+            msg += " (Image libs missing)"
+            
+        print(f"Analyze called but libraries missing. Returning mock. ML={ML_AVAILABLE}, IMG={IMAGE_LIBS_AVAILABLE}")
         return JSONResponse(content={
             "status": "success",
             "mock": True,
-            "message": "AI analysis unavailable in this deployment (LITE mode).",
+            "message": msg,
             "analysis_result": {
                 "summary": "AI processing is disabled in this environment.",
                 "issues": []
