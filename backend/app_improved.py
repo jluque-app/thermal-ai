@@ -222,9 +222,31 @@ SEG_MODEL: Optional[SegmentationModel] = None
 # -----------------------------
 # Health/debug endpoints
 # -----------------------------
-@app.get("/")
-def root() -> Dict[str, Any]:
-    return {"status": "ok", "service": "ThermalAI"}
+# -----------------------------
+# Static Files (Frontend)
+# -----------------------------
+# Verify if frontend/dist exists (Docker build puts it at /app/frontend/dist)
+# The script runs from /app/backend, so we look up one level
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+
+if frontend_dist.exists():
+    app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="assets")
+    
+    # Catch-all for SPA (must be LAST)
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Allow API calls to pass through (already handled by routers above, but safe check)
+        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi"):
+            raise HTTPException(status_code=404, detail="Not Found")
+            
+        # Serve index.html for any other route
+        index_path = frontend_dist / "index.html"
+        return FileResponse(index_path)
+else:
+    print(f"WARNING: Frontend dist not found at {frontend_dist}. API only mode.")
+    @app.get("/")
+    def root() -> Dict[str, Any]:
+        return {"status": "ok", "service": "ThermalAI API (Frontend not attached)"}
 
 
 @app.get("/health")
