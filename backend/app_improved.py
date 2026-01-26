@@ -70,14 +70,37 @@ except ImportError:
 
 import openai
 import stripe
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from docx import Document
-from pptx import Presentation
-from pptx.util import Inches, Pt
+import openai
+import stripe
 
-from pdf_endpoint import router as pdf_router
-from docx_endpoint import router as docx_router
+# -----------------------------
+# Reporting Libs (Made Optional for Vercel "Extreme-Lite")
+# -----------------------------
+import openai
+import stripe
+
+# -----------------------------
+# Reporting Libs (Made Optional for Vercel "Extreme-Lite")
+# -----------------------------
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    from docx import Document
+    from pptx import Presentation
+    from pptx.util import Inches, Pt
+    REPORTING_LIBS_AVAILABLE = True
+except ImportError:
+    print("WARNING: Reporting libraries (reportlab/docx/pptx) not found. Report generation disabled.")
+    REPORTING_LIBS_AVAILABLE = False
+    canvas = None
+    A4 = None
+    Document = None
+    Presentation = None
+    Inches = None
+    Pt = None
+
+# from pdf_endpoint import router as pdf_router
+# from docx_endpoint import router as docx_router
 # NOTE: we do NOT include ppt_endpoint router to avoid route conflicts with inline /v1/report/ppt
 # from ppt_endpoint import router as ppt_router
 
@@ -161,8 +184,8 @@ def ppt_template_inspect():
 # -----------------------------
 # Routers (AFTER app exists)
 # -----------------------------
-app.include_router(pdf_router)
-app.include_router(docx_router)
+# app.include_router(pdf_router) # Disabled in Extreme-Lite (deps missing)
+# app.include_router(docx_router) # Disabled in Extreme-Lite (deps missing)
 # app.include_router(ppt_router)  # DISABLED (we use inline PPT endpoint below)
 app.include_router(expert_chat_router)
 app.include_router(expert_lead_router)
@@ -596,6 +619,9 @@ def _call_ppt_builder_robust(builder_fn, *, template_pptx_path: str, out_dir: st
 # -----------------------------
 @app.post("/v1/report/ppt")
 async def report_ppt_v1(payload: Dict[str, Any] = Body(...), format: str = "pptx"):
+    if not REPORTING_LIBS_AVAILABLE:
+        return JSONResponse(status_code=503, content={"error": "PPT generation disabled (Missing dependencies)."})
+
     try:
         TEMPLATE_PPTX = _template_pptx_path()
         if not Path(TEMPLATE_PPTX).exists():
