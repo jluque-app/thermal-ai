@@ -227,7 +227,13 @@ SEG_MODEL: Optional[SegmentationModel] = None
 # -----------------------------
 # Verify if frontend/dist exists (Docker build puts it at /app/frontend/dist)
 # The script runs from /app/backend, so we look up one level
-frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+print(f"DEBUG: app_improved.py is at {Path(__file__).resolve()}")
+print(f"DEBUG: Looking for frontend at {frontend_dist}")
+print(f"DEBUG: Exists? {frontend_dist.exists()}")
+if frontend_dist.exists():
+    print(f"DEBUG: Contents of dist: {[f.name for f in frontend_dist.iterdir()]}")
 
 if frontend_dist.exists():
     app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="assets")
