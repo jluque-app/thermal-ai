@@ -5,6 +5,7 @@ COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ ./
 RUN npm run build
+RUN ls -la /app/frontend
 
 # Runtime Stage: Python Backend
 FROM python:3.9-slim
