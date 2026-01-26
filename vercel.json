@@ -13,7 +13,7 @@
             "destination": "/frontend/dist/$1"
         }
     ],
-    "buildCommand": "cd frontend && npm install && npm run build",
+    "buildCommand": "cd frontend && npm install && npm run build && rm -rf node_modules",
     "outputDirectory": "frontend/dist",
     "framework": "vite"
 }
