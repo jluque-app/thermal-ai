@@ -99,8 +99,8 @@ except ImportError:
     Inches = None
     Pt = None
 
-# from pdf_endpoint import router as pdf_router
-# from docx_endpoint import router as docx_router
+from pdf_endpoint import router as pdf_router
+from docx_endpoint import router as docx_router
 # NOTE: we do NOT include ppt_endpoint router to avoid route conflicts with inline /v1/report/ppt
 # from ppt_endpoint import router as ppt_router
 
@@ -184,8 +184,8 @@ def ppt_template_inspect():
 # -----------------------------
 # Routers (AFTER app exists)
 # -----------------------------
-# app.include_router(pdf_router) # Disabled in Extreme-Lite (deps missing)
-# app.include_router(docx_router) # Disabled in Extreme-Lite (deps missing)
+app.include_router(pdf_router)
+app.include_router(docx_router)
 # app.include_router(ppt_router)  # DISABLED (we use inline PPT endpoint below)
 app.include_router(expert_chat_router)
 app.include_router(expert_lead_router)

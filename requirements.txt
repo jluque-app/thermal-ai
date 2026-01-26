@@ -1,16 +1,19 @@
-# python-docx==1.1.2 # Removed for Extreme-Lite
+python-docx==1.1.2
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
 python-multipart==0.0.12
-# pillow==10.4.0 # Removed for Ultra-Light Vercel build
-# numpy==1.26.4  # Removed for Ultra-Light Vercel build
+pillow==10.4.0
+numpy==1.26.4
 requests==2.32.3
-# opencv-python-headless==4.10.0.84 # Too large for Vercel
-# torch==2.3.1 # Too large for Vercel
-# torchvision==0.18.1 # Too large for Vercel
-# python-pptx==0.6.23 # Removed for Extreme-Lite
-# lxml==5.2.2 # Removed to allow binary wheel resolution
+opencv-python-headless==4.10.0.84
+torch==2.3.1
+torchvision==0.18.1
+python-pptx==0.6.23
+lxml==5.2.2
+reportlab==4.2.5
 openai>=1.40.0
 email-validator
-# psycopg2-binary==2.9.* # Removed to save space on Vercel
+psycopg2-binary==2.9.*
 stripe
+gdown==5.2.0
+segment-anything-py==1.0
