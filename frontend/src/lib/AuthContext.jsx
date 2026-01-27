@@ -122,6 +122,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(false);
     } catch (error) {
       console.error('User auth check failed:', error);
+      // alert("Session Verify Failed: " + (error.message || "Unknown Error")); 
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
 
