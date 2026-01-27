@@ -126,7 +126,7 @@ export default function AppHome() {
 
                 <div className="text-center mt-16">
                     <Button
-                        onClick={() => navigate('/NewAnalysis')}
+                        onClick={() => navigate(isAuthenticated ? '/Dashboard' : '/PlanSelection')}
                         className="h-14 px-10 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold shadow-lg hover:shadow-emerald-500/30 transition-all"
                     >
                         Get Started <ArrowRight className="ml-2 w-5 h-5" />

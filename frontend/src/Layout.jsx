@@ -134,13 +134,13 @@ export default function Layout({ children, currentPageName }) {
               <>
                 <button
                   onClick={handleLogin}
-                  className="text-sm font-medium text-slate-300 hover:text-white transition-colors bg-transparent border-none"
+                  className="text-sm font-medium text-slate-500 hover:text-emerald-600 transition-colors bg-transparent border-none mr-2"
                 >
-                  Log in
+                  Log in / Sign up
                 </button>
                 <Button
-                  onClick={() => navigate('/AppHome')} // Or login then dashboard
-                  className="bg-white text-brand-navy-900 hover:bg-brand-teal-500 hover:text-brand-navy-900 font-bold rounded-full px-6 transition-all shadow-lg hover:shadow-brand-teal-500/20"
+                  onClick={() => navigate('/PlanSelection')}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-full px-6 transition-all shadow-md hover:shadow-lg"
                 >
                   Get Started <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
