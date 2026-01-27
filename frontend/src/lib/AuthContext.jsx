@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
       console.warn("AuthContext: No App ID found. Running in Local Dev Mode.");
       setAppPublicSettings({ id: "local-dev", public_settings: {} });
       setAppPublicSettings({ id: "local-dev", public_settings: {} });
-      setUser({ id: "dev-user-123", email: "user@demo.local" });
+      setUser({ id: "dev-user-123", email: "guest@thermalai.eu" });
       setIsAuthenticated(true);
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);

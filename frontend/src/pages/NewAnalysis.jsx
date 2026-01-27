@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import UsageBadge from "../components/UsageBadge";
 import { cn } from "@/lib/utils";
 
-const THERMAL_API_ANALYZE_URL = "http://localhost:8000/analyze";
+const THERMAL_API_ANALYZE_URL = "/analyze";
 const OVERLAY_MIN = 80;
 const OVERLAY_MAX = 98;
 

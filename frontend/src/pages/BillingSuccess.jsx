@@ -16,14 +16,14 @@ export default function BillingSuccess() {
 
   async function fetchBillingMe(userId, userEmail) {
     try {
-      const res = await fetch("http://localhost:8000/v1/billing/me", {
+      const res = await fetch("/v1/billing/me", {
         headers: { "X-User-Id": userId, "X-User-Email": userEmail },
       });
       if (res.ok) return await res.json();
     } catch { }
 
     try {
-      const url = `http://localhost:8000/v1/billing/me?user_id=${encodeURIComponent(
+      const url = `/v1/billing/me?user_id=${encodeURIComponent(
         userId
       )}&user_email=${encodeURIComponent(userEmail)}`;
       const res2 = await fetch(url);
