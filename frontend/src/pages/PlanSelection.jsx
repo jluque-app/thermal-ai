@@ -10,7 +10,7 @@ export default function PlanSelection() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const nextPath = searchParams.get("next") || "/NewAnalysis";
+  const nextPath = searchParams.get("next") || "/Dashboard";
 
   // New Pricing Data
   const PLANS = [

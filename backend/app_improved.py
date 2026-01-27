@@ -302,10 +302,14 @@ def _load_model_background() -> None:
              # Fallback to mock if real model fails (e.g. missing file/URL)
              from segmentation_utils import MockSegmentationModel
              SEG_MODEL = MockSegmentationModel()
-             print("MockSegmentationModel loaded.")
+             print("MockSegmentationModel loaded (Fallback).")
         except Exception as e2:
              print("CRITICAL: Failed to load even MockSegmentationModel:", repr(e2))
-             SEG_MODEL = None
+             # Even if this fails, we create a dummy class so usage doesn't crash
+             class DummyModel:
+                 def to(self, d): return self
+                 def generate(self, img): return []
+             SEG_MODEL = DummyModel()
 
 
 # -----------------------------

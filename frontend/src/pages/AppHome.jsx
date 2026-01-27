@@ -3,8 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Zap, Image as ImageIcon, BarChart3, Target, Check } from 'lucide-react';
 
+import { useAuth } from '@/lib/AuthContext';
+
 export default function AppHome() {
     const navigate = useNavigate();
+    const { isAuthenticated, navigateToLogin } = useAuth();
 
     return (
         <div className="bg-slate-50 min-h-screen font-sans text-slate-900 pb-20">
@@ -19,12 +22,22 @@ export default function AppHome() {
                     </p>
 
                     <div className="flex flex-col md:flex-row gap-4 justify-center pt-8">
-                        <Button
-                            onClick={() => navigate('/NewAnalysis')}
-                            className="h-14 px-8 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold shadow-lg hover:shadow-emerald-500/30 transition-all"
-                        >
-                            Start Free Analysis <ArrowRight className="ml-2 w-5 h-5" />
-                        </Button>
+                        {!isAuthenticated ? (
+                            <Button
+                                onClick={navigateToLogin}
+                                className="h-14 px-8 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold shadow-lg hover:shadow-emerald-500/30 transition-all"
+                            >
+                                Log In / Sign Up
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={() => navigate('/Dashboard')}
+                                className="h-14 px-8 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold shadow-lg hover:shadow-emerald-500/30 transition-all"
+                            >
+                                Go to Dashboard <ArrowRight className="ml-2 w-5 h-5" />
+                            </Button>
+                        )}
+
                         <Button
                             variant="outline"
                             onClick={() => navigate('/ExpertPreview')}

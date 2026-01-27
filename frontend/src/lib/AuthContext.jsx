@@ -19,17 +19,28 @@ export const AuthProvider = ({ children }) => {
 
   const checkAppState = async () => {
     // START: Local Dev Fallback
+    // START: Local Dev Fallback
+    // Only use fallback if we are TRULY on localhost and AppID is missing. 
+    // On production (app.thermalai.eu), we should fail gracefully (unauthenticated) rather than faking a user.
     if (!appParams.appId) {
-      console.warn("AuthContext: No App ID found. Running in Local Dev Mode.");
-      setAppPublicSettings({ id: "local-dev", public_settings: {} });
-      setAppPublicSettings({ id: "local-dev", public_settings: {} });
-      setUser({ id: "dev-user-123", email: "guest@thermalai.eu" });
-      setIsAuthenticated(true);
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+      if (isLocalhost) {
+        console.warn("AuthContext: No App ID found. Running in Local Dev Mode (Guest).");
+        setAppPublicSettings({ id: "local-dev", public_settings: {} });
+        setUser({ id: "dev-user-123", email: "guest@thermalai.eu" });
+        setIsAuthenticated(true);
+      } else {
+        console.warn("AuthContext: No App ID found in Production. Defaulting to Unauthenticated.");
+        setIsAuthenticated(false);
+      }
+
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);
       setAuthError(null);
       return;
     }
+    // END: Local Dev Fallback
     // END: Local Dev Fallback
 
     try {
