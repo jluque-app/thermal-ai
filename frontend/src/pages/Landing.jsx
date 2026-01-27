@@ -26,7 +26,13 @@ export default function Landing() {
                         </p>
 
                         <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center">
-                            <Button onClick={() => navigate('/AppHome')} className="h-14 px-8 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold shadow-lg hover:shadow-emerald-500/30 transition-all">
+                            <Button onClick={() => {
+                                if (window.location.hostname.includes('localhost')) {
+                                    navigate('/AppHome');
+                                } else {
+                                    window.location.href = 'https://app.thermalai.eu';
+                                }
+                            }} className="h-14 px-8 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold shadow-lg hover:shadow-emerald-500/30 transition-all">
                                 Run ThermalAI App <ArrowRight className="ml-2 w-5 h-5" />
                             </Button>
                             <Button variant="outline" onClick={() => navigate('/ExpertPreview')} className="h-14 px-8 text-lg border-emerald-600 text-emerald-700 hover:bg-emerald-50 rounded-full font-bold transition-all">

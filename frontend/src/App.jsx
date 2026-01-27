@@ -43,9 +43,22 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/" element={
-        <LayoutWrapper currentPageName={mainPageKey}>
-          <MainPage />
-        </LayoutWrapper>
+        (() => {
+          const hostname = window.location.hostname;
+          if (hostname.startsWith('app.')) {
+            const AppHome = Pages['AppHome'];
+            return (
+              <LayoutWrapper currentPageName="AppHome">
+                <AppHome />
+              </LayoutWrapper>
+            );
+          }
+          return (
+            <LayoutWrapper currentPageName={mainPageKey}>
+              <MainPage />
+            </LayoutWrapper>
+          );
+        })()
       } />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
