@@ -158,7 +158,8 @@ export const AuthProvider = ({ children }) => {
   const navigateToLogin = () => {
     // START: Local Dev Fallback
     if (!appParams.appId) {
-      console.log("Local Dev login (already logged in as dev).");
+      console.warn("AuthContext: No App ID found.");
+      alert("Configuration Error: App ID is missing. Authentication disabled.");
       return;
     }
     // END: Local Dev Fallback

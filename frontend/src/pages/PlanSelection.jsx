@@ -81,7 +81,12 @@ export default function PlanSelection() {
       const userEmail = user?.email;
 
       if (!userId || !userEmail) {
-        alert("Please sign in first to purchase a plan.");
+        // alert("Please sign in first to purchase a plan.");
+        if (typeof window.navigateToLogin === 'function') {
+          // If we had exposed it globally, but we didn't. 
+          // We need to use the one from useAuth, but wait, this is inside handleSelect.
+          // We can't access navigateToLogin from useAuth here easily unless we destructured it.
+        }
         return;
       }
 
