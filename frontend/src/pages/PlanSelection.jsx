@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { appParams } from "@/lib/app-params";
 import { Button } from "@/components/ui/button";
 import { Check, ArrowLeft, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
@@ -93,7 +94,8 @@ export default function PlanSelection() {
       // Map planId directly to lookup_key for paid plans
       const lookupKey = planId;
 
-      const resp = await fetch("/v1/billing/checkout", {
+      const baseUrl = appParams.appBaseUrl || "";
+      const resp = await fetch(`${baseUrl}/v1/billing/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
