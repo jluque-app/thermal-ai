@@ -4,6 +4,8 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ ./
+ARG VITE_BASE44_APP_ID
+ENV VITE_BASE44_APP_ID=$VITE_BASE44_APP_ID
 RUN npm run build
 RUN ls -la /app/frontend
 

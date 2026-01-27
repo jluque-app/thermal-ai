@@ -38,21 +38,17 @@ function extractErrorMessage(payload, fallback = "Something went wrong. Please t
   return fallback;
 }
 
+import { useAuth } from "@/lib/AuthContext";
+
 export default function NewAnalysis() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const { user, isAuthenticated, isLoadingAuth, navigateToLogin } = useAuth();
 
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
-      } catch (error) {
-        console.error("Failed to load user:", error);
-      }
+    if (!isLoadingAuth && !isAuthenticated) {
+      navigateToLogin();
     }
-    loadUser();
-  }, []);
+  }, [isLoadingAuth, isAuthenticated, navigateToLogin]);
 
   // Files
   const [rgbImage, setRgbImage] = useState(null);
