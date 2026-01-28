@@ -1,19 +1,23 @@
 {
     "rewrites": [
         {
-            "source": "/v1/(.*)",
-            "destination": "/api/index.py"
+            "source": "/v1/:match*",
+            "destination": "https://thermal-ai.onrender.com/v1/:match*"
         },
         {
             "source": "/analyze",
-            "destination": "/api/index.py"
+            "destination": "https://thermal-ai.onrender.com/analyze"
+        },
+        {
+            "source": "/health",
+            "destination": "https://thermal-ai.onrender.com/health"
         },
         {
             "source": "/(.*)",
-            "destination": "/frontend/dist/$1"
+            "destination": "/index.html"
         }
     ],
-    "buildCommand": "cd frontend && npm install && npm run build && rm -rf node_modules",
+    "buildCommand": "cd frontend && npm install && npm run build",
     "outputDirectory": "frontend/dist",
     "framework": "vite"
 }

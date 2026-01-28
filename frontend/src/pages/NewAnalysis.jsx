@@ -135,7 +135,7 @@ export default function NewAnalysis() {
     if (!userId || !userEmail) return { ok: true };
 
     try {
-      const entitlementCheck = await fetch("http://localhost:8000/v1/billing/can_analyze", {
+      const entitlementCheck = await fetch("/v1/billing/can_analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, user_email: userEmail, consume: false }),
@@ -237,7 +237,7 @@ export default function NewAnalysis() {
       const safePayload = typeof payload === "object" ? payload : { raw: {}, report: {} };
       if (!safePayload.raw) safePayload.raw = {};
       if (!safePayload.raw.meta) safePayload.raw.meta = {};
-      safePayload.raw.meta.api_base = "http://localhost:8000";
+      safePayload.raw.meta.api_base = "";
 
       navigate("/Results", { state: { result: safePayload } });
 

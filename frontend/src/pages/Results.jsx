@@ -49,7 +49,7 @@ export default function Results() {
     // Use meta.api_base or fallback to localhost:8000 if not set, or relative path if proxied
     // Since we are running on port 5173 and backend on 8000, we need to explicitly point to 8000
     // unless a proxy is set up. The user didn't mention proxy.
-    const apiBase = meta?.api_base || "http://localhost:8000";
+    const apiBase = meta?.api_base || "";
     const endpoint = `${apiBase}/v1/report/ppt${format === 'pdf' ? '?format=pdf' : ''}`;
 
     try {

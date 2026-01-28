@@ -74,7 +74,7 @@ export default function ExpertPreview() {
 
     try {
       // Direct call to local backend since base44 cloud functions aren't available locally
-      const resp = await fetch("http://localhost:8000/v1/expert/chat", {
+      const resp = await fetch("/v1/expert/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -121,7 +121,7 @@ export default function ExpertPreview() {
 
     setLeadBusy(true);
     try {
-      const response = await fetch("http://localhost:8000/v1/contact", {
+      const response = await fetch("/v1/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, message: leadRole, type }),

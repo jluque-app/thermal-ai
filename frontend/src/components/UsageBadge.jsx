@@ -16,7 +16,7 @@ export default function UsageBadge() {
       const user = await base44.auth.me();
       const { userId, userEmail } = getUserIdentity(user);
 
-      const response = await fetch(`http://localhost:8000/v1/billing/me?user_id=${encodeURIComponent(userId)}&user_email=${encodeURIComponent(userEmail)}`);
+      const response = await fetch(`/v1/billing/me?user_id=${encodeURIComponent(userId)}&user_email=${encodeURIComponent(userEmail)}`);
       if (response.ok) {
         const data = await response.json();
         setEntitlements(data);

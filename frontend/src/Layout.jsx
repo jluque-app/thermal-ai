@@ -37,8 +37,8 @@ export default function Layout({ children, currentPageName }) {
     if (!silent) setRefreshing(true);
     try {
       const { userId, userEmail } = getUserIdentity(userObj);
-      // Using a fallback for the API URL if not defined, though ideally this is environment based
-      const response = await fetch(`http://localhost:8000/v1/billing/me?user_id=${encodeURIComponent(userId)}&user_email=${encodeURIComponent(userEmail)}`);
+      // Using relative path so Vercel rewrites it to the Render Backend
+      const response = await fetch(`/v1/billing/me?user_id=${encodeURIComponent(userId)}&user_email=${encodeURIComponent(userEmail)}`);
 
       if (response.ok) {
         const data = await response.json();
