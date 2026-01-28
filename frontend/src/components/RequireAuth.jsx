@@ -1,41 +1,40 @@
-import React, { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { useAuth } from '@/lib/AuthContext';
+import { LoginDialog } from "@/components/LoginDialog";
+import { useState, useEffect } from "react";
 
-export default function RequireAuth({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const location = useLocation();
+export function RequireAuth({ children }) {
+  const { user, isLoadingAuth } = useAuth();
+  const [loginOpen, setLoginOpen] = useState(false);
 
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        const authenticated = await base44.auth.isAuthenticated();
-        setIsAuthenticated(authenticated);
-      } catch (error) {
-        setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
-      }
+    if (!isLoadingAuth && !user) {
+      setLoginOpen(true);
     }
-    checkAuth();
-  }, []);
+  }, [isLoadingAuth, user]);
 
-  if (loading) {
+  if (isLoadingAuth) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-slate-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2D9B87] mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-bold text-slate-900">Sign in required</h2>
+          <p className="text-slate-600">Please sign in to access this page.</p>
+          <LoginDialog
+            open={true}
+            onOpenChange={(open) => {
+              if (!open) {
+                // Prevent closing if auth is required? 
+                // Or let them close and see the "Sign in required" screen.
+                setLoginOpen(false);
+              }
+            }}
+          />
         </div>
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    // Redirect to login, then to plan selection after login
-    base44.auth.redirectToLogin(`/PlanSelection?next=${encodeURIComponent(location.pathname)}`);
-    return null;
   }
 
   return children;

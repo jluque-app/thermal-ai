@@ -10,7 +10,7 @@ const getAppParamValue = (paramName, { defaultValue = undefined, removeFromUrl =
 	if (isNode) {
 		return defaultValue;
 	}
-	const storageKey = `base44_${toSnakeCase(paramName)}`;
+	const storageKey = `thermalai_${toSnakeCase(paramName)}`;
 	const urlParams = new URLSearchParams(window.location.search);
 	const searchParam = urlParams.get(paramName);
 	if (removeFromUrl) {
@@ -35,16 +35,12 @@ const getAppParamValue = (paramName, { defaultValue = undefined, removeFromUrl =
 }
 
 const getAppParams = () => {
-	if (getAppParamValue("clear_access_token") === 'true') {
-		storage.removeItem('base44_access_token');
-		storage.removeItem('token');
-	}
+	// Simple cleanup
 	return {
-		appId: getAppParamValue("app_id", { defaultValue: "69510c02729bae331d99c858" }),
-		token: getAppParamValue("access_token", { removeFromUrl: true }) || getAppParamValue("token", { removeFromUrl: true }),
-		fromUrl: getAppParamValue("from_url", { defaultValue: window.location.href }),
-		functionsVersion: getAppParamValue("functions_version", { defaultValue: import.meta.env.VITE_BASE44_FUNCTIONS_VERSION }),
-		appBaseUrl: getAppParamValue("app_base_url", { defaultValue: import.meta.env.VITE_BASE44_APP_BASE_URL || "https://thermal-insights-1d99c858.base44.app" }),
+		appId: getAppParamValue("app_id", { defaultValue: "" }), // No longer used
+		token: "", // Handled by AuthContext
+		fromUrl: window.location.href,
+		appBaseUrl: "", // Use relative paths
 	}
 }
 
