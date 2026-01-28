@@ -8,16 +8,18 @@ import { LogOut, User, Menu, X, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import ScrollToTop from "@/components/ScrollToTop";
+import { LoginDialog } from "@/components/LoginDialog";
 
 
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, navigateToLogin, isLoadingAuth } = useAuth();
+  const { user, logout, isLoadingAuth } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -51,8 +53,8 @@ export default function Layout({ children, currentPageName }) {
     }
   }
 
-  async function handleLogin() {
-    navigateToLogin();
+  function handleLogin() {
+    setLoginOpen(true);
   }
 
   async function handleLogout() {
@@ -76,6 +78,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen flex flex-col font-sans selection:bg-brand-teal-500/30">
       <ScrollToTop />
+      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
       {/* Navigation */}
       <nav
         className={cn(
