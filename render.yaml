@@ -3,7 +3,7 @@ services:
     name: thermalai-backend
     env: docker
     dockerfilePath: Dockerfile
-    plan: free
+    plan: starter
     autoDeploy: false
     envVars:
       - key: PYTHON_VERSION
