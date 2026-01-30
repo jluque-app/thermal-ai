@@ -1594,6 +1594,8 @@ async def analyze(
     # Check if ML/Image libs are available
     if not ML_AVAILABLE or not IMAGE_LIBS_AVAILABLE:
         # Return a mock response if ML libs are missing (Vercel LITE mode)
+        print("Warning: ML/Image libs missing but proceeding to try analysis...")
+        pass
         # msg = "AI analysis unavailable."
         # if not IMAGE_LIBS_AVAILABLE:
         #     msg += " (Image libs missing)"
