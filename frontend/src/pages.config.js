@@ -1,6 +1,7 @@
 import AppHome from './pages/AppHome';
 import BillingCancel from './pages/BillingCancel';
 import BillingSuccess from './pages/BillingSuccess';
+import Dashboard from './pages/Dashboard';
 import ExpertPreview from './pages/ExpertPreview';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
@@ -16,6 +17,7 @@ const PAGES = {
     "AppHome": AppHome,
     "BillingCancel": BillingCancel,
     "BillingSuccess": BillingSuccess,
+    "Dashboard": Dashboard,
     "ExpertPreview": ExpertPreview,
     "Home": Home,
     "Landing": Landing,
