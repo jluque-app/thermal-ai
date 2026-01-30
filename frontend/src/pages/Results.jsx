@@ -39,6 +39,7 @@ export default function Results() {
 
   function b64img(b64) {
     if (!b64) return null;
+    if (b64.startsWith('/') || b64.startsWith('http')) return b64;
     return b64.startsWith("data:image") ? b64 : `data:image/png;base64,${b64}`;
   }
 

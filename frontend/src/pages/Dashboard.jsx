@@ -33,6 +33,7 @@ const icons = {
 
 // Prototype Data: German Neighborhood (Example: Prenzlauer Berg, Berlin)
 const DEMO_BUILDINGS = [
+    { id: 'real_demo', lat: 52.5200, lng: 13.4050, addr: "Berlin Property (Real Analysis)", type: "Residential Block", rating: "poor", loss: "Critical", savings: "€1,740/yr" },
     { id: 1, lat: 52.5414, lng: 13.4132, addr: "Danziger Str. 55", type: "Apartment Block", rating: "poor", loss: "High", savings: "€4,200/yr" },
     { id: 2, lat: 52.5420, lng: 13.4145, addr: "Danziger Str. 62", type: "Office", rating: "medium", loss: "Moderate", savings: "€1,800/yr" },
     { id: 3, lat: 52.5408, lng: 13.4110, addr: "Lychener Str. 12", type: "Historical", rating: "good", loss: "Low", savings: "€450/yr" },
@@ -156,7 +157,38 @@ export default function Dashboard() {
                                         <h3 className="font-bold text-md mb-1">{b.addr}</h3>
                                         <p className="text-sm text-slate-600 mb-2">{b.type}</p>
                                         <div className="flex gap-2">
-                                            <Button size="sm" className="h-7 text-xs bg-emerald-600" onClick={() => navigate('/Results')}>
+                                            <Button size="sm" className="h-7 text-xs bg-emerald-600" onClick={() => {
+                                                if (b.id === 'real_demo') {
+                                                    // Navigate with pre-filled state for the Real Analysis
+                                                    const payload = {
+                                                        report: {
+                                                            meta: { city: "Berlin, Germany", address: b.addr },
+                                                            headline: {
+                                                                estimated_annual_heat_loss_kwh: 14500,
+                                                                estimated_annual_cost_eur: 1740, // 0.12 * 14500
+                                                                estimated_co2_emissions_kg: 2900,
+                                                                present_value_eur: 26100,
+                                                                key_driver: "Uninsulated Façade"
+                                                            },
+                                                            images: {
+                                                                rgb_png_base64: "/demo_rgb.jpg",
+                                                                thermal_png_base64: "/demo_thermal.jpg",
+                                                                overlay_png_base64: "/demo_rgb.jpg", // Fallback to RGB as mock overlay if needed, or better just use RGB
+                                                                boxed_rgb_png_base64: "/demo_rgb.jpg"
+                                                            }
+                                                        },
+                                                        raw: {
+                                                            artifacts: {
+                                                                rgb_image_base64_png: "/demo_rgb.jpg",
+                                                                thermal_image_base64_png: "/demo_thermal.jpg"
+                                                            }
+                                                        }
+                                                    };
+                                                    navigate('/Results', { state: { result: payload } });
+                                                } else {
+                                                    navigate('/Results');
+                                                }
+                                            }}>
                                                 View Report
                                             </Button>
                                         </div>

@@ -321,6 +321,31 @@ def _load_model_background() -> None:
              class DummyModel:
                  def to(self, d): return self
                  def generate(self, img): return []
+                 def predict_masks(self, img):
+                     # Return a fake result compatible with analyze()
+                     import numpy as np
+                     w, h = img.size
+                     # Create simple masks (all wall, small window)
+                     wall = np.ones((h, w), dtype=bool)
+                     window = np.zeros((h, w), dtype=bool)
+                     # Center window
+                     cw, ch = w//2, h//2
+                     window[ch-20:ch+20, cw-20:cw+20] = True
+                     door = np.zeros((h, w), dtype=bool)
+                     counts = {
+                         "wall_pixels": int(wall.sum()),
+                         "window_pixels": int(window.sum()),
+                         "door_pixels": int(door.sum()),
+                         "total_pixels": w*h
+                     }
+                     class FakeSegResult:
+                         def __init__(self):
+                             self.wall_mask = wall
+                             self.window_mask = window
+                             self.door_mask = door
+                             self.counts = counts
+                             self.indexed = np.zeros((h,w), dtype=np.uint8)
+                     return FakeSegResult()
              SEG_MODEL = DummyModel()
 
 
