@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+// import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { getUserIdentity } from "@/components/userIdentity";
 import { Badge } from "@/components/ui/badge";
 
 export default function UsageBadge() {
   const [entitlements, setEntitlements] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth(); // Use auth context
 
   useEffect(() => {
     fetchEntitlements();
-  }, []);
+  }, [user]);
 
   const fetchEntitlements = async () => {
     try {
-      const user = await base44.auth.me();
+      // const user = await base44.auth.me();
+      if (!user) return; // No user, no badge
+
       const { userId, userEmail } = getUserIdentity(user);
 
       const response = await fetch(`/v1/billing/me?user_id=${encodeURIComponent(userId)}&user_email=${encodeURIComponent(userEmail)}`);
