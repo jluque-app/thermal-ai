@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ChevronRight, BarChart3, ShieldCheck, Zap, Image as ImageIcon, Target, Check } from "lucide-react";
