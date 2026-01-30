@@ -245,7 +245,13 @@ if frontend_dist.exists():
         if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi"):
             raise HTTPException(status_code=404, detail="Not Found")
             
-        # Serve index.html for any other route
+        # Check if a static file exists at this path in frontend/dist
+        # e.g. manifest.json, robots.txt, favicon.ico
+        potential_path = frontend_dist / full_path
+        if potential_path.exists() and potential_path.is_file():
+            return FileResponse(potential_path)
+
+        # Serve index.html for any other route (SPA Fallback)
         index_path = frontend_dist / "index.html"
         return FileResponse(index_path)
 else:
