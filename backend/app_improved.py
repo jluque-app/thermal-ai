@@ -278,9 +278,15 @@ def ensure_model_downloaded() -> None:
 
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    import gdown
-    print("Downloading Model.pth from Google Drive at runtime...")
-    gdown.download(url=url, output=str(MODEL_PATH), quiet=False, fuzzy=True)
+    import torch
+    print(f"Downloading Model from {url}...")
+    if "drive.google.com" in url:
+        import gdown
+        gdown.download(url=url, output=str(MODEL_PATH), quiet=False, fuzzy=True)
+    else:
+        # Direct download (e.g. from Meta FB servers)
+        torch.hub.download_url_to_file(url, str(MODEL_PATH))
+    
     print("Model download complete:", str(MODEL_PATH))
 
 

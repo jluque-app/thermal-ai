@@ -9,4 +9,4 @@ services:
       - key: PYTHON_VERSION
         value: 3.9.18
       - key: MODEL_GDRIVE_URL
-        value: 1a2b3c... (Replace with actual ID if you have it, or rely on Mock)
+        value: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth
