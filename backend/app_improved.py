@@ -1588,21 +1588,21 @@ async def analyze(
     # Check if ML/Image libs are available
     if not ML_AVAILABLE or not IMAGE_LIBS_AVAILABLE:
         # Return a mock response if ML libs are missing (Vercel LITE mode)
-        msg = "AI analysis unavailable."
-        if not IMAGE_LIBS_AVAILABLE:
-            msg += " (Image libs missing)"
+        # msg = "AI analysis unavailable."
+        # if not IMAGE_LIBS_AVAILABLE:
+        #     msg += " (Image libs missing)"
             
-        print(f"Analyze called but libraries missing. Returning mock. ML={ML_AVAILABLE}, IMG={IMAGE_LIBS_AVAILABLE}")
-        return JSONResponse(content={
-            "status": "success",
-            "mock": True,
-            "message": msg,
-            "analysis_result": {
-                "summary": "AI processing is disabled in this environment.",
-                "issues": []
-            },
-            "artifacts": {}
-        })
+        # print(f"Analyze called but libraries missing. Returning mock. ML={ML_AVAILABLE}, IMG={IMAGE_LIBS_AVAILABLE}")
+        # return JSONResponse(content={
+        #     "status": "success",
+        #     "mock": True,
+        #     "message": msg,
+        #     "analysis_result": {
+        #         "summary": "AI processing is disabled in this environment.",
+        #         "issues": []
+        #     },
+        #     "artifacts": {}
+        # })
 
     if SEG_MODEL is None:
         return JSONResponse(status_code=503, content={"error": "Model not loaded yet. Please retry in a few seconds."})
