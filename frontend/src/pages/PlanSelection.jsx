@@ -17,7 +17,60 @@ export default function PlanSelection() {
 
   // New Pricing Data
   const PLANS = [
-    // ... items
+    {
+      id: "community",
+      name: "Community",
+      price: "Free",
+      desc: "Perfect for testing the platform.",
+      features: ["3 Building Analyses / mo", "Basic Reports", "Web-only Access"],
+      cta: "Continue Free",
+      variant: "outline",
+      popular: false
+    },
+    {
+      id: "project_scan_1",
+      name: "Single Scan",
+      price: "€99",
+      unit: "/ scan",
+      desc: "One-time access to a full building analysis.",
+      features: ["Detailed Heat-Loss Breakdown", "Monetary Cost Estimates", "CO₂ Emissions Analysis", "Downloadable PPT/PDF"],
+      cta: "Buy Now",
+      variant: "default",
+      popular: false
+    },
+    {
+      id: "project_pack_10",
+      name: "Bundle of 10",
+      price: "€790",
+      unit: " total",
+      desc: "Save ~20%. Valid for a limited period.",
+      features: ["10 Full Analyses", "All 'Single Scan' features", "Component-level breakdown", "Shareable Reports"],
+      cta: "Get Bundle",
+      variant: "default",
+      popular: true
+    },
+    {
+      id: "project_pack_50",
+      name: "Bundle of 50",
+      price: "€2,900",
+      unit: " total",
+      desc: "For short-term projects or pilot programs.",
+      features: ["50 Full Analyses", "Bulk Processing", "Priority Support", "All Pro features"],
+      cta: "Get Bundle",
+      variant: "outline",
+      popular: false
+    },
+    {
+      id: "project_monthly",
+      name: "Subscription",
+      price: "€1,990",
+      unit: "/ month",
+      desc: "For high-volume continuous usage.",
+      features: ["50 Analyses / month", "Full Reports & exports", "CO₂ & Cost Analysis", "Ongoing Access"],
+      cta: "Subscribe",
+      variant: "outline",
+      popular: false
+    }
   ];
   // Re-declare PLANS inside or outside. 
   // Since I am only replacing valid range, I must be careful not to delete PLANS if I don't provide it.
