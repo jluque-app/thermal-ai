@@ -72,56 +72,79 @@ export default function PlanSelection() {
       popular: false
     }
   ];
-  // Re-declare PLANS inside or outside. 
-  // Since I am only replacing valid range, I must be careful not to delete PLANS if I don't provide it.
-  // Wait, I should better target specific lines or include PLANS in replacement if I replace the header.
-  // Let's just target the function start and handleSelect.
+  const handleSelect = async (planId) => {
+    try {
+      const userId = user?.id;
+      const userEmail = user?.email;
 
-  const userId = user?.id;
-  const userEmail = user?.email;
+      // REQUIRE AUTH for ALL plans, including Community
+      if (!userId || !userEmail) {
+        setLoginOpen(true);
+        return;
+      }
 
-  // REQUIRE AUTH for ALL plans, including Community
-  if (!userId || !userEmail) {
-    setLoginOpen(true);
-    return;
-  }
+      if (planId === 'community') {
+        navigate(nextPath);
+        return;
+      }
 
-  if (planId === 'community') {
-    navigate(nextPath);
-    return;
-  }
+      // Map planId directly to lookup_key for paid plans
+      const lookupKey = planId;
 
-  // ... Paid plans logic ...
-  const lookupKey = planId;
-  // ...
-} catch (e) {
-  // ...
-}
-  }
+      const baseUrl = appParams.appBaseUrl || "";
+      const resp = await fetch(`${baseUrl}/v1/billing/checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lookup_key: lookupKey,
+          user_id: userId,
+          user_email: userEmail,
+          success_url: window.location.origin + "/BillingSuccess?session_id={CHECKOUT_SESSION_ID}&next=" + encodeURIComponent(nextPath),
+          cancel_url: window.location.origin + "/PlanSelection?canceled=true",
+        })
+      });
 
-// Handle Skip with Auth Check
-const handleSkip = () => {
-  if (!user) {
-    setLoginOpen(true);
-  } else {
-    navigate(nextPath);
-  }
-};
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error || "Checkout failed");
+      }
 
-return (
-  <div className="min-h-screen bg-slate-50 pb-20 pt-10 px-4 md:px-6">
-    <div className="max-w-7xl mx-auto space-y-12 text-center">
-      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-      {/* ... */}
-      {/* ... (existing JSX) ... */}
+      const data = await resp.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Failed to start checkout.");
+      }
 
-      <div className="text-center">
-        <Button variant="link" onClick={handleSkip} className="text-slate-400 hover:text-slate-600 text-xs">
-          Skip for now
-        </Button>
+    } catch (e) {
+      console.error("Checkout failed", e);
+      alert("Payment Error: " + e.message);
+    }
+  };
+
+  // Handle Skip with Auth Check
+  const handleSkip = () => {
+    if (!user) {
+      setLoginOpen(true);
+    } else {
+      navigate(nextPath);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 pb-20 pt-10 px-4 md:px-6">
+      <div className="max-w-7xl mx-auto space-y-12 text-center">
+        <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+        {/* ... */}
+        {/* ... (existing JSX) ... */}
+
+        <div className="text-center">
+          <Button variant="link" onClick={handleSkip} className="text-slate-400 hover:text-slate-600 text-xs">
+            Skip for now
+          </Button>
+        </div>
+
       </div>
-
     </div>
-  </div>
-);
+  );
 }
