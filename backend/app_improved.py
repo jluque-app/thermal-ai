@@ -495,7 +495,8 @@ def register_thermal_to_rgb(vis_img: Image.Image, thr_img: Image.Image):
     }
 
     # If OpenCV isn't available, gracefully fall back to simple resize (old behaviour).
-    if not HAVE_CV2:
+    # If OpenCV isn't available, gracefully fall back to simple resize (old behaviour).
+    if cv2 is None:
         resized = thr_img.resize(vis_img.size)
         meta.update({
             "method": "resize_only",
