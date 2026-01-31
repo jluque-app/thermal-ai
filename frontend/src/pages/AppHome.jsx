@@ -40,6 +40,12 @@ export default function AppHome() {
                         Scale your retrofit projects with AI-powered analysis of heat loss, cost matching, and ROI projection.
                     </p>
                     <Button
+                        onClick={() => navigate('/NewAnalysis')}
+                        className="h-14 px-8 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold transition-all mr-4 shadow-lg shadow-emerald-500/30"
+                    >
+                        Start a New Analysis
+                    </Button>
+                    <Button
                         variant="outline"
                         onClick={() => navigate('/ExpertPreview')}
                         className="h-14 px-8 text-lg border-emerald-600 text-emerald-700 hover:bg-emerald-50 rounded-full font-bold transition-all"

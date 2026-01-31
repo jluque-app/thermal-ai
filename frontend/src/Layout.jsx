@@ -70,7 +70,7 @@ export default function Layout({ children, currentPageName }) {
   }
 
   const navLinks = [
-    { name: "ThermalAI app", path: "/AppHome" },
+    { name: "Dashboard", path: "/CitySelection" },
     { name: "Chat ThermalAI", path: "/ExpertPreview" },
     { name: "Pricing", path: "/PlanSelection" },
   ];
@@ -127,7 +127,7 @@ export default function Layout({ children, currentPageName }) {
                   <LogOut className="w-4 h-4" />
                 </Button>
                 <Button
-                  onClick={() => navigate('/AppHome')}
+                  onClick={() => navigate('/CitySelection')}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-full px-6"
                 >
                   Dashboard
