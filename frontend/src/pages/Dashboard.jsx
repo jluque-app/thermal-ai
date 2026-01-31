@@ -33,7 +33,7 @@ const icons = {
 };
 
 // Prototype Data: German Neighborhood (Example: Prenzlauer Berg, Berlin)
-const DEMO_BUILDINGS = [
+const BERLIN_DEMO_BUILDINGS = [
     { id: 'real_demo', lat: 52.5200, lng: 13.4050, addr: "Berlin Property (Real Analysis)", type: "Residential Block", rating: "poor", loss: "Critical", savings: "€1,740/yr" },
     { id: 1, lat: 52.5414, lng: 13.4132, addr: "Danziger Str. 55", type: "Apartment Block", rating: "poor", loss: "High", savings: "€4,200/yr" },
     { id: 2, lat: 52.5420, lng: 13.4145, addr: "Danziger Str. 62", type: "Office", rating: "medium", loss: "Moderate", savings: "€1,800/yr" },
@@ -42,28 +42,44 @@ const DEMO_BUILDINGS = [
     { id: 5, lat: 52.5410, lng: 13.4125, addr: "Raumerstr. 8", type: "Mixed Use", rating: "medium", loss: "Moderate", savings: "€2,100/yr" },
 ];
 
-function ChangeView({ center }) {
+function ChangeView({ center, zoom }) {
     const map = useMap();
-    map.setView(center, 15);
+    map.setView(center, zoom);
     return null;
 }
 
 export default function Dashboard() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, isAuthenticated, isLoadingAuth } = useAuth();
     const [selectedBuilding, setSelectedBuilding] = useState(null);
     const [showResultModal, setShowResultModal] = useState(false);
 
-    // Default Center (Győr, Hungary)
-    const defaultCenter = [47.6825, 17.6044];
+    // Determine City from Navigation State (Default to Gyor if none)
+    const selectedCity = location.state?.selectedCity || 'gyor';
 
-    // Mock Data for Map
-    const DEMO_BUILDINGS = [
-        { id: 'gyor_1', lat: 47.6825, lng: 17.6044, status: 'Completed', rating: 'poor', addr: '9025 Gyor, Esze Tamas utca 13', type: 'Residential (Brick)', sqft: '192 m²' },
-        { id: '1', lat: 52.5200, lng: 13.4050, status: 'Completed', rating: 'good', addr: 'Alexanderplatz 1, Berlin', type: 'Commercial Office', sqft: '12,500' },
-        { id: '2', lat: 52.5220, lng: 13.4000, status: 'In Progress', rating: 'medium', addr: 'Karl-Liebknecht-Str. 14', type: 'Mixed Use', sqft: '8,200' },
-        { id: 'real_demo', lat: 52.5418, lng: 13.4135, status: 'Completed', rating: 'poor', addr: 'Berlin Property (Real Analysis)', type: 'Residential Block', sqft: '1,680 m²' },
-    ];
+    // City Configurations
+    const cityConfigs = {
+        berlin: {
+            center: [52.5418, 13.4135],
+            zoom: 13,
+            buildings: [
+                { id: '1', lat: 52.5200, lng: 13.4050, status: 'Completed', rating: 'good', addr: 'Alexanderplatz 1, Berlin', type: 'Commercial Office', sqft: '12,500' },
+                { id: '2', lat: 52.5220, lng: 13.4000, status: 'In Progress', rating: 'medium', addr: 'Karl-Liebknecht-Str. 14', type: 'Mixed Use', sqft: '8,200' },
+                { id: 'real_demo', lat: 52.5418, lng: 13.4135, status: 'Completed', rating: 'poor', addr: 'Berlin Property (Real Analysis)', type: 'Residential Block', sqft: '1,680 m²' },
+            ]
+        },
+        gyor: {
+            center: [47.6825, 17.6044],
+            zoom: 15,
+            buildings: [
+                { id: 'gyor_1', lat: 47.6825, lng: 17.6044, status: 'Completed', rating: 'poor', addr: '9025 Gyor, Esze Tamas utca 13', type: 'Residential (Brick)', sqft: '192 m²' },
+            ]
+        }
+    };
+
+    const activeConfig = cityConfigs[selectedCity] || cityConfigs.gyor;
+    const DEMO_BUILDINGS = activeConfig.buildings;
 
     // Protect Route
     useEffect(() => {
@@ -146,12 +162,13 @@ export default function Dashboard() {
 
                 {/* Map Area */}
                 <div className="flex-1 relative bg-slate-100">
-                    <MapContainer center={defaultCenter} zoom={15} style={{ height: '100%', width: '100%' }}>
+                    {/* Map Interface - key forces re-render on city change */}
+                    <MapContainer key={selectedCity} center={activeConfig.center} zoom={activeConfig.zoom} style={{ height: '100%', width: '100%' }}>
                         <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                         />
-                        <ChangeView center={selectedBuilding ? [selectedBuilding.lat, selectedBuilding.lng] : defaultCenter} />
+                        <ChangeView center={selectedBuilding ? [selectedBuilding.lat, selectedBuilding.lng] : activeConfig.center} zoom={activeConfig.zoom} />
 
                         {DEMO_BUILDINGS.map(b => (
                             <Marker

@@ -1,6 +1,7 @@
 import AppHome from './pages/AppHome';
 import BillingCancel from './pages/BillingCancel';
 import BillingSuccess from './pages/BillingSuccess';
+import CitySelection from './pages/CitySelection';
 import Dashboard from './pages/Dashboard';
 import ExpertPreview from './pages/ExpertPreview';
 import Home from './pages/Home';
@@ -25,6 +26,7 @@ const PAGES = {
     "NewAnalysis": NewAnalysis,
     "NewAnalysisProtected": NewAnalysisProtected,
     "PlanSelection": PlanSelection,
+    "CitySelection": CitySelection,
     "Results": Results,
 };
 
