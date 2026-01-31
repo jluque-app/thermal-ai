@@ -44,22 +44,77 @@ export default function Results() {
   }
 
   // Export Handlers
+  // Export Handlers
   const handleExport = async (format) => {
     if (!payload) return;
 
-    // Use meta.api_base or fallback to localhost:8000 if not set, or relative path if proxied
-    // Since we are running on port 5173 and backend on 8000, we need to explicitly point to 8000
-    // unless a proxy is set up. The user didn't mention proxy.
     const apiBase = meta?.api_base || "";
     const endpoint = `${apiBase}/v1/report/ppt${format === 'pdf' ? '?format=pdf' : ''}`;
 
+    // Helper to fetch and convert path to base64 if needed
+    const ensureBase64 = async (val) => {
+      if (!val) return null;
+      if (val.startsWith("data:image")) {
+        // strip prefix if needed by backend, but backend likely handles it. 
+        // Actually app_improved backend expects RAW base64 usually, or handles data uri.
+        // Let's safe-strip.
+        return val.replace(/^data:image\/[a-z]+;base64,/, "");
+      }
+      if (val.startsWith("/") || val.startsWith("http")) {
+        try {
+          const r = await fetch(val);
+          const b = await r.blob();
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const res = reader.result;
+              resolve(res.replace(/^data:image\/[a-z]+;base64,/, ""));
+            };
+            reader.readAsDataURL(b);
+          });
+        } catch (e) {
+          console.error("Failed to convert image to b64", val, e);
+          return null;
+        }
+      }
+      return val; // assume already raw b64
+    };
+
     try {
+      // PRE-PROCESS payload to ensure images are base64
+      const reportImages = payload.report?.images || {};
+      const rawArtifacts = payload.raw?.artifacts || {};
+
+      // We need to mutate a copy
+      const exportPayload = JSON.parse(JSON.stringify(payload));
+      if (!exportPayload.report) exportPayload.report = {};
+      if (!exportPayload.report.images) exportPayload.report.images = {};
+
+      // Convert key images
+      const imgKeys = ["rgb_png_base64", "thermal_png_base64", "overlay_png_base64", "boxed_rgb_png_base64"];
+
+      for (const k of imgKeys) {
+        // Source priority: current report > raw > fallback values we calculated in component
+        let val = reportImages[k] || rawArtifacts[k.replace("_png", "_image")];
+
+        // In the component we derived: overlayB64, rgbB64, etc. 
+        // Let's trust the component's resolved values as best source of truth for "what user sees"
+        if (k === "rgb_png_base64") val = rgbB64;
+        if (k === "thermal_png_base64") val = thermalB64;
+        if (k === "overlay_png_base64") val = overlayB64;
+        if (k === "boxed_rgb_png_base64") val = boxedB64;
+
+        if (val) {
+          exportPayload.report.images[k] = await ensureBase64(val);
+        }
+      }
+
       const resp = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          report: payload.report || {},
-          raw: payload.raw || {}
+          report: exportPayload.report || {},
+          raw: exportPayload.raw || {}
         })
       });
 

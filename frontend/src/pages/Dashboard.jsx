@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Plus, MessageSquareText, Download, Building, Search, Map as MapIcon, Power, ArrowRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, MessageSquareText, Download, Building, Search, Map as MapIcon, Power, ArrowRight, TrendingUp, Zap, CloudFog, Coins } from 'lucide-react';
 import L from 'leaflet';
 
 // Fix Leaflet marker icons in React
@@ -51,6 +52,7 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoadingAuth } = useAuth();
     const [selectedBuilding, setSelectedBuilding] = useState(null);
+    const [showResultModal, setShowResultModal] = useState(false);
 
     // Default Center (Berlin)
     const defaultCenter = [52.5418, 13.4135];
@@ -159,32 +161,7 @@ export default function Dashboard() {
                                         <div className="flex gap-2">
                                             <Button size="sm" className="h-7 text-xs bg-emerald-600" onClick={() => {
                                                 if (b.id === 'real_demo') {
-                                                    // Navigate with pre-filled state for the Real Analysis
-                                                    const payload = {
-                                                        report: {
-                                                            meta: { city: "Berlin, Germany", address: b.addr },
-                                                            headline: {
-                                                                estimated_annual_heat_loss_kwh: 14500,
-                                                                estimated_annual_cost_eur: 1740, // 0.12 * 14500
-                                                                estimated_co2_emissions_kg: 2900,
-                                                                present_value_eur: 26100,
-                                                                key_driver: "Uninsulated Façade"
-                                                            },
-                                                            images: {
-                                                                rgb_png_base64: "/demo_rgb.jpg",
-                                                                thermal_png_base64: "/demo_thermal.jpg",
-                                                                overlay_png_base64: "/demo_rgb.jpg", // Fallback to RGB as mock overlay if needed, or better just use RGB
-                                                                boxed_rgb_png_base64: "/demo_rgb.jpg"
-                                                            }
-                                                        },
-                                                        raw: {
-                                                            artifacts: {
-                                                                rgb_image_base64_png: "/demo_rgb.jpg",
-                                                                thermal_image_base64_png: "/demo_thermal.jpg"
-                                                            }
-                                                        }
-                                                    };
-                                                    navigate('/Results', { state: { result: payload } });
+                                                    setShowResultModal(true);
                                                 } else {
                                                     navigate('/Results');
                                                 }
@@ -197,6 +174,88 @@ export default function Dashboard() {
                             </Marker>
                         ))}
                     </MapContainer>
+
+                    {/* MINI-RESULTS POPUP (Modal) */}
+                    <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-50">
+                            <DialogHeader>
+                                <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                                    <TrendingUp className="w-6 h-6 text-emerald-600" /> Analysis Report: Berlin Property
+                                </DialogTitle>
+                                <DialogDescription>
+                                    Full thermal analysis results for {selectedBuilding?.addr}
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="grid md:grid-cols-4 gap-4 mt-4">
+                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Annual Loss</p>
+                                    <span className="text-xl font-bold text-slate-900">14,500</span> <span className="text-xs text-slate-500">kWh</span>
+                                    <Zap className="w-6 h-6 text-emerald-100 absolute right-2 top-2" />
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Cost</p>
+                                    <span className="text-xl font-bold text-slate-900">€1,740</span> <span className="text-xs text-slate-500">/yr</span>
+                                    <Coins className="w-6 h-6 text-amber-100 absolute right-2 top-2" />
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Emissions</p>
+                                    <span className="text-xl font-bold text-slate-900">2,900</span> <span className="text-xs text-slate-500">kg</span>
+                                    <CloudFog className="w-6 h-6 text-blue-100 absolute right-2 top-2" />
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Target</p>
+                                    <span className="text-sm font-bold text-emerald-600">Uninsulated Façade</span>
+                                </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-4 mt-4">
+                                <div className="space-y-1">
+                                    <p className="text-xs font-semibold text-slate-500 uppercase">Original RGB</p>
+                                    <div className="aspect-[4/3] bg-slate-200 rounded-lg overflow-hidden border border-slate-300">
+                                        <img src="/demo_rgb.jpg" className="w-full h-full object-cover" alt="RGB" />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-semibold text-slate-500 uppercase">Thermal Scan</p>
+                                    <div className="aspect-[4/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-300">
+                                        <img src="/demo_thermal.jpg" className="w-full h-full object-contain" alt="Thermal" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 flex justify-end gap-2">
+                                <Button variant="outline" onClick={() => setShowResultModal(false)}>Close</Button>
+                                <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
+                                    // Full navigation with payload
+                                    // Reuse the payload logic from before for full export capabilities
+                                    const payload = {
+                                        report: {
+                                            meta: { city: "Berlin, Germany", address: "Berlin Property (Real Analysis)" },
+                                            headline: {
+                                                estimated_annual_heat_loss_kwh: 14500,
+                                                estimated_annual_cost_eur: 1740,
+                                                estimated_co2_emissions_kg: 2900,
+                                                present_value_eur: 26100,
+                                                key_driver: "Uninsulated Façade"
+                                            },
+                                            images: {
+                                                rgb_png_base64: "/demo_rgb.jpg",
+                                                thermal_png_base64: "/demo_thermal.jpg",
+                                                overlay_png_base64: "/demo_rgb.jpg",
+                                                boxed_rgb_png_base64: "/demo_rgb.jpg"
+                                            }
+                                        },
+                                        raw: { artifacts: { rgb_image_base64_png: "/demo_rgb.jpg", thermal_image_base64_png: "/demo_thermal.jpg" } }
+                                    };
+                                    navigate('/Results', { state: { result: payload } });
+                                }}>
+                                    Full Report & Export
+                                </Button>
+                            </div>
+
+                        </DialogContent>
+                    </Dialog>
 
                     {/* Floating Legend */}
                     <div className="absolute bottom-6 right-6 bg-white p-4 rounded-lg shadow-lg z-[1000] border border-slate-200">
