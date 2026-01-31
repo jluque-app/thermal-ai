@@ -54,8 +54,16 @@ export default function Dashboard() {
     const [selectedBuilding, setSelectedBuilding] = useState(null);
     const [showResultModal, setShowResultModal] = useState(false);
 
-    // Default Center (Berlin)
-    const defaultCenter = [52.5418, 13.4135];
+    // Default Center (Győr, Hungary)
+    const defaultCenter = [47.6825, 17.6044];
+
+    // Mock Data for Map
+    const DEMO_BUILDINGS = [
+        { id: 'gyor_1', lat: 47.6825, lng: 17.6044, status: 'Completed', rating: 'poor', addr: '9025 Gyor, Esze Tamas utca 13', type: 'Residential (Brick)', sqft: '192 m²' },
+        { id: '1', lat: 52.5200, lng: 13.4050, status: 'Completed', rating: 'good', addr: 'Alexanderplatz 1, Berlin', type: 'Commercial Office', sqft: '12,500' },
+        { id: '2', lat: 52.5220, lng: 13.4000, status: 'In Progress', rating: 'medium', addr: 'Karl-Liebknecht-Str. 14', type: 'Mixed Use', sqft: '8,200' },
+        { id: 'real_demo', lat: 52.5418, lng: 13.4135, status: 'Completed', rating: 'poor', addr: 'Berlin Property (Real Analysis)', type: 'Residential Block', sqft: '1,680 m²' },
+    ];
 
     // Protect Route
     useEffect(() => {
@@ -160,7 +168,7 @@ export default function Dashboard() {
                                         <p className="text-sm text-slate-600 mb-2">{b.type}</p>
                                         <div className="flex gap-2">
                                             <Button size="sm" className="h-7 text-xs bg-emerald-600" onClick={() => {
-                                                if (b.id === 'real_demo') {
+                                                if (b.id === 'real_demo' || b.id === 'gyor_1') {
                                                     setShowResultModal(true);
                                                 } else {
                                                     navigate('/Results');
@@ -178,82 +186,98 @@ export default function Dashboard() {
                     {/* MINI-RESULTS POPUP (Modal) */}
                     <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
                         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-50">
-                            <DialogHeader>
-                                <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                                    <TrendingUp className="w-6 h-6 text-emerald-600" /> Analysis Report: Berlin Property
-                                </DialogTitle>
-                                <DialogDescription>
-                                    Full thermal analysis results for {selectedBuilding?.addr}
-                                </DialogDescription>
-                            </DialogHeader>
+                            {(() => {
+                                const isGyor = selectedBuilding?.id === 'gyor_1';
+                                const data = isGyor ? {
+                                    title: "Analysis Report: Győr Residential",
+                                    addr: "9025 Győr, Esze Tamás utca 13",
+                                    loss: "12,100", cost: "€1,450", co2: "2,400", target: "Uninsulated Roof/Facade",
+                                    rgb: "/gyor_pilot/building_1/rgb.jpg", thermal: "/gyor_pilot/building_1/thermal.jpg"
+                                } : {
+                                    title: "Analysis Report: Berlin Property",
+                                    addr: "Berlin Property (Real Analysis)",
+                                    loss: "14,500", cost: "€1,740", co2: "2,900", target: "Uninsulated Façade",
+                                    rgb: "/demo_rgb.jpg", thermal: "/demo_thermal.jpg"
+                                };
 
-                            <div className="grid md:grid-cols-4 gap-4 mt-4">
-                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Annual Loss</p>
-                                    <span className="text-xl font-bold text-slate-900">14,500</span> <span className="text-xs text-slate-500">kWh</span>
-                                    <Zap className="w-6 h-6 text-emerald-100 absolute right-2 top-2" />
-                                </div>
-                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Cost</p>
-                                    <span className="text-xl font-bold text-slate-900">€1,740</span> <span className="text-xs text-slate-500">/yr</span>
-                                    <Coins className="w-6 h-6 text-amber-100 absolute right-2 top-2" />
-                                </div>
-                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Emissions</p>
-                                    <span className="text-xl font-bold text-slate-900">2,900</span> <span className="text-xs text-slate-500">kg</span>
-                                    <CloudFog className="w-6 h-6 text-blue-100 absolute right-2 top-2" />
-                                </div>
-                                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Target</p>
-                                    <span className="text-sm font-bold text-emerald-600">Uninsulated Façade</span>
-                                </div>
-                            </div>
+                                return (
+                                    <>
+                                        <DialogHeader>
+                                            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                                                <TrendingUp className="w-6 h-6 text-emerald-600" /> {data.title}
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Full thermal analysis results for {data.addr}
+                                            </DialogDescription>
+                                        </DialogHeader>
 
-                            <div className="grid md:grid-cols-2 gap-4 mt-4">
-                                <div className="space-y-1">
-                                    <p className="text-xs font-semibold text-slate-500 uppercase">Original RGB</p>
-                                    <div className="aspect-[4/3] bg-slate-200 rounded-lg overflow-hidden border border-slate-300">
-                                        <img src="/demo_rgb.jpg" className="w-full h-full object-cover" alt="RGB" />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs font-semibold text-slate-500 uppercase">Thermal Scan</p>
-                                    <div className="aspect-[4/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-300">
-                                        <img src="/demo_thermal.jpg" className="w-full h-full object-contain" alt="Thermal" />
-                                    </div>
-                                </div>
-                            </div>
+                                        <div className="grid md:grid-cols-4 gap-4 mt-4">
+                                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Annual Loss</p>
+                                                <span className="text-xl font-bold text-slate-900">{data.loss}</span> <span className="text-xs text-slate-500">kWh</span>
+                                                <Zap className="w-6 h-6 text-emerald-100 absolute right-2 top-2" />
+                                            </div>
+                                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Cost</p>
+                                                <span className="text-xl font-bold text-slate-900">{data.cost}</span> <span className="text-xs text-slate-500">/yr</span>
+                                                <Coins className="w-6 h-6 text-amber-100 absolute right-2 top-2" />
+                                            </div>
+                                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Emissions</p>
+                                                <span className="text-xl font-bold text-slate-900">{data.co2}</span> <span className="text-xs text-slate-500">kg</span>
+                                                <CloudFog className="w-6 h-6 text-blue-100 absolute right-2 top-2" />
+                                            </div>
+                                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Target</p>
+                                                <span className="text-sm font-bold text-emerald-600">{data.target}</span>
+                                            </div>
+                                        </div>
 
-                            <div className="mt-6 flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => setShowResultModal(false)}>Close</Button>
-                                <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
-                                    // Full navigation with payload
-                                    // Reuse the payload logic from before for full export capabilities
-                                    const payload = {
-                                        report: {
-                                            meta: { city: "Berlin, Germany", address: "Berlin Property (Real Analysis)" },
-                                            headline: {
-                                                estimated_annual_heat_loss_kwh: 14500,
-                                                estimated_annual_cost_eur: 1740,
-                                                estimated_co2_emissions_kg: 2900,
-                                                present_value_eur: 26100,
-                                                key_driver: "Uninsulated Façade"
-                                            },
-                                            images: {
-                                                rgb_png_base64: "/demo_rgb.jpg",
-                                                thermal_png_base64: "/demo_thermal.jpg",
-                                                overlay_png_base64: "/demo_rgb.jpg",
-                                                boxed_rgb_png_base64: "/demo_rgb.jpg"
-                                            }
-                                        },
-                                        raw: { artifacts: { rgb_image_base64_png: "/demo_rgb.jpg", thermal_image_base64_png: "/demo_thermal.jpg" } }
-                                    };
-                                    navigate('/Results', { state: { result: payload } });
-                                }}>
-                                    Full Report & Export
-                                </Button>
-                            </div>
+                                        <div className="grid md:grid-cols-2 gap-4 mt-4">
+                                            <div className="space-y-1">
+                                                <p className="text-xs font-semibold text-slate-500 uppercase">Original RGB</p>
+                                                <div className="aspect-[4/3] bg-slate-200 rounded-lg overflow-hidden border border-slate-300">
+                                                    <img src={data.rgb} className="w-full h-full object-cover" alt="RGB" />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-xs font-semibold text-slate-500 uppercase">Thermal Scan</p>
+                                                <div className="aspect-[4/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-300">
+                                                    <img src={data.thermal} className="w-full h-full object-contain" alt="Thermal" />
+                                                </div>
+                                            </div>
+                                        </div>
 
+                                        <div className="mt-6 flex justify-end gap-2">
+                                            <Button variant="outline" onClick={() => setShowResultModal(false)}>Close</Button>
+                                            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
+                                                const payload = {
+                                                    report: {
+                                                        meta: { city: isGyor ? "Győr, Hungary" : "Berlin, Germany", address: data.addr },
+                                                        headline: {
+                                                            estimated_annual_heat_loss_kwh: parseInt(data.loss.replace(',', '')),
+                                                            estimated_annual_cost_eur: parseInt(data.cost.replace('€', '').replace(',', '')),
+                                                            estimated_co2_emissions_kg: parseInt(data.co2.replace(',', '')),
+                                                            present_value_eur: parseInt(data.cost.replace('€', '').replace(',', '')) * 15, // rough calc
+                                                            key_driver: data.target
+                                                        },
+                                                        images: {
+                                                            rgb_png_base64: data.rgb,
+                                                            thermal_png_base64: data.thermal,
+                                                            overlay_png_base64: data.rgb,
+                                                            boxed_rgb_png_base64: data.rgb
+                                                        }
+                                                    },
+                                                    raw: { artifacts: { rgb_image_base64_png: data.rgb, thermal_image_base64_png: data.thermal } }
+                                                };
+                                                navigate('/Results', { state: { result: payload } });
+                                            }}>
+                                                Full Report & Export
+                                            </Button>
+                                        </div>
+                                    </>
+                                );
+                            })()}
                         </DialogContent>
                     </Dialog>
 
