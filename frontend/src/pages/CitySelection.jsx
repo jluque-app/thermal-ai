@@ -66,15 +66,18 @@ const CitySelection = () => {
                 </div>
 
                 <div className="mt-12 flex flex-col items-center gap-4">
-                    <Button
+                    <button
                         onClick={() => navigate('/NewAnalysis')}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-6 text-lg rounded-full shadow-lg shadow-emerald-200 transition-all transform hover:scale-105"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-6 text-lg rounded-full shadow-lg shadow-emerald-200 transition-all transform hover:scale-105 font-bold cursor-pointer"
                     >
-                        Start New Analysis
-                    </Button>
-                    <Button variant="ghost" onClick={() => navigate('/Dashboard')} className="text-slate-400 hover:text-slate-600">
+                        🚀 Run New Analysis
+                    </button>
+                    <button
+                        onClick={() => navigate('/Dashboard')}
+                        className="text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer text-sm py-2"
+                    >
                         Skip to Default Dashboard
-                    </Button>
+                    </button>
                 </div>
             </div>
         </div>
