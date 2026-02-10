@@ -63,6 +63,7 @@ export default function Results() {
       if (val.startsWith("/") || val.startsWith("http")) {
         try {
           const r = await fetch(val);
+          if (!r.ok) throw new Error(`Failed to fetch ${val}: ${r.statusText}`);
           const b = await r.blob();
           return new Promise((resolve) => {
             const reader = new FileReader();
