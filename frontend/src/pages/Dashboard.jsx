@@ -64,16 +64,56 @@ export default function Dashboard() {
             center: [52.5418, 13.4135],
             zoom: 13,
             buildings: [
-                { id: '1', lat: 52.5200, lng: 13.4050, status: 'Completed', rating: 'good', addr: 'Alexanderplatz 1, Berlin', type: 'Commercial Office', sqft: '12,500' },
-                { id: '2', lat: 52.5220, lng: 13.4000, status: 'In Progress', rating: 'medium', addr: 'Karl-Liebknecht-Str. 14', type: 'Mixed Use', sqft: '8,200' },
-                { id: 'real_demo', lat: 52.5418, lng: 13.4135, status: 'Completed', rating: 'poor', addr: 'Berlin Property (Real Analysis)', type: 'Residential Block', sqft: '1,680 m²' },
+                {
+                    id: '1', lat: 52.5200, lng: 13.4050, status: 'Completed', rating: 'good', addr: 'Alexanderplatz 1, Berlin', type: 'Commercial Office', sqft: '12,500',
+                    reportData: null // No detailed report for this one
+                },
+                {
+                    id: '2', lat: 52.5220, lng: 13.4000, status: 'In Progress', rating: 'medium', addr: 'Karl-Liebknecht-Str. 14', type: 'Mixed Use', sqft: '8,200',
+                    reportData: null
+                },
+                {
+                    id: 'real_demo', lat: 52.5418, lng: 13.4135, status: 'Completed', rating: 'poor', addr: 'Berlin Property (Real Analysis)', type: 'Residential Block', sqft: '1,680 m²',
+                    reportData: {
+                        loss: "14,500", cost: "€1,740", co2: "2,900", target: "Uninsulated Façade",
+                        images: {
+                            rgb: "/demo_rgb.jpg",
+                            thermal: "/demo_thermal.jpg",
+                            overlay: "/demo_rgb.jpg", // Fallback (or generate real one if avail)
+                            boxed: "/demo_rgb.jpg"
+                        }
+                    }
+                },
             ]
         },
         gyor: {
-            center: [47.6825, 17.6044],
-            zoom: 15,
+            center: [47.688, 17.615], // Adjusted center to fit both
+            zoom: 13,
             buildings: [
-                { id: 'gyor_1', lat: 47.6825, lng: 17.6044, status: 'Completed', rating: 'poor', addr: '9025 Gyor, Esze Tamas utca 13', type: 'Residential (Brick)', sqft: '192 m²' },
+                {
+                    id: 'gyor_1', lat: 47.6825, lng: 17.6044, status: 'Completed', rating: 'poor', addr: '9025 Gyor, Esze Tamas utca 13', type: 'Residential (Brick)', sqft: '192 m²', loss: 'Critical', savings: '€1,450/yr',
+                    reportData: {
+                        loss: "12,100", cost: "€1,450", co2: "2,400", target: "Uninsulated Roof/Facade",
+                        images: {
+                            rgb: "/gyor_pilot/building_1/rgb.jpg",
+                            thermal: "/gyor_pilot/building_1/thermal.jpg",
+                            overlay: "/gyor_pilot/building_1/overlay.jpg", // Generated!
+                            boxed: "/gyor_pilot/building_1/boxed.jpg"      // Generated!
+                        }
+                    }
+                },
+                {
+                    id: 'gyor_student', lat: 47.694444, lng: 17.625278, status: 'Completed', rating: 'poor', addr: 'Egyetem ter 1, 9026 Gyor', type: 'K0 Student Hostel', sqft: '1,680 m²', loss: 'Critical', savings: '€15,200/yr',
+                    reportData: {
+                        loss: "126,000", cost: "€15,120", co2: "25,200", target: "Uninsulated Panel Facade",
+                        images: {
+                            rgb: "/gyor_pilot/building_student/rgb.jpg",
+                            thermal: "/gyor_pilot/building_student/thermal.jpg",
+                            overlay: "/gyor_pilot/building_student/overlay.jpg", // Generated!
+                            boxed: "/gyor_pilot/building_student/boxed.jpg"      // Generated!
+                        }
+                    }
+                }
             ]
         }
     };
@@ -140,12 +180,12 @@ export default function Dashboard() {
                                     <div className="flex justify-between items-start mb-1">
                                         <h3 className="font-bold text-slate-800">{b.addr}</h3>
                                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${b.rating === 'good' ? 'bg-emerald-100 text-emerald-800' : b.rating === 'medium' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>
-                                            {b.loss} Loss
+                                            {b.loss || 'N/A'} Loss
                                         </span>
                                     </div>
                                     <p className="text-xs text-slate-500 mb-2">{b.type}</p>
                                     <div className="flex items-center gap-1 text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded inline-block">
-                                        <Power className="w-3 h-3" /> Potential Savings: <strong>{b.savings}</strong>
+                                        <Power className="w-3 h-3" /> Potential Savings: <strong>{b.savings || 'Pending'}</strong>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -185,10 +225,10 @@ export default function Dashboard() {
                                         <p className="text-sm text-slate-600 mb-2">{b.type}</p>
                                         <div className="flex gap-2">
                                             <Button size="sm" className="h-7 text-xs bg-emerald-600" onClick={() => {
-                                                if (b.id === 'real_demo' || b.id === 'gyor_1') {
+                                                if (b.reportData) {
                                                     setShowResultModal(true);
                                                 } else {
-                                                    navigate('/Results');
+                                                    navigate('/Results'); // Fallback or dedicated page
                                                 }
                                             }}>
                                                 View Report
@@ -203,28 +243,18 @@ export default function Dashboard() {
                     {/* MINI-RESULTS POPUP (Modal) */}
                     <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
                         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-50">
-                            {(() => {
-                                const isGyor = selectedBuilding?.id === 'gyor_1';
-                                const data = isGyor ? {
-                                    title: "Analysis Report: Győr Residential",
-                                    addr: "9025 Győr, Esze Tamás utca 13",
-                                    loss: "12,100", cost: "€1,450", co2: "2,400", target: "Uninsulated Roof/Facade",
-                                    rgb: "/gyor_pilot/building_1/rgb.jpg", thermal: "/gyor_pilot/building_1/thermal.jpg"
-                                } : {
-                                    title: "Analysis Report: Berlin Property",
-                                    addr: "Berlin Property (Real Analysis)",
-                                    loss: "14,500", cost: "€1,740", co2: "2,900", target: "Uninsulated Façade",
-                                    rgb: "/demo_rgb.jpg", thermal: "/demo_thermal.jpg"
-                                };
+                            {selectedBuilding && selectedBuilding.reportData ? (() => {
+                                const data = selectedBuilding.reportData;
+                                const isGyor = selectedCity === 'gyor';
 
                                 return (
                                     <>
                                         <DialogHeader>
                                             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                                                <TrendingUp className="w-6 h-6 text-emerald-600" /> {data.title}
+                                                <TrendingUp className="w-6 h-6 text-emerald-600" /> Analysis Report: {selectedBuilding.type}
                                             </DialogTitle>
                                             <DialogDescription>
-                                                Full thermal analysis results for {data.addr}
+                                                Full thermal analysis results for {selectedBuilding.addr}
                                             </DialogDescription>
                                         </DialogHeader>
 
@@ -254,13 +284,17 @@ export default function Dashboard() {
                                             <div className="space-y-1">
                                                 <p className="text-xs font-semibold text-slate-500 uppercase">Original RGB</p>
                                                 <div className="aspect-[4/3] bg-slate-200 rounded-lg overflow-hidden border border-slate-300">
-                                                    <img src={data.rgb} className="w-full h-full object-cover" alt="RGB" />
+                                                    <img src={data.images.rgb} className="w-full h-full object-cover" alt="RGB" />
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-xs font-semibold text-slate-500 uppercase">Thermal Scan</p>
-                                                <div className="aspect-[4/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-300">
-                                                    <img src={data.thermal} className="w-full h-full object-contain" alt="Thermal" />
+                                                <p className="text-xs font-semibold text-slate-500 uppercase">Thermal Scan & AI Overlay</p>
+                                                <div className="aspect-[4/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-300 relative group">
+                                                    {/* Toggle between thermal and overlay on hover/click could be cool, for now show Overlay if available */}
+                                                    <img src={data.images.overlay || data.images.thermal} className="w-full h-full object-contain" alt="Thermal/Overlay" />
+                                                    <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded">
+                                                        AI Heat Detection
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -270,22 +304,29 @@ export default function Dashboard() {
                                             <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
                                                 const payload = {
                                                     report: {
-                                                        meta: { city: isGyor ? "Győr, Hungary" : "Berlin, Germany", address: data.addr },
+                                                        meta: { city: isGyor ? "Győr, Hungary" : "Berlin, Germany", address: selectedBuilding.addr },
                                                         headline: {
-                                                            estimated_annual_heat_loss_kwh: parseInt(data.loss.replace(',', '')),
-                                                            estimated_annual_cost_eur: parseInt(data.cost.replace('€', '').replace(',', '')),
-                                                            estimated_co2_emissions_kg: parseInt(data.co2.replace(',', '')),
-                                                            present_value_eur: parseInt(data.cost.replace('€', '').replace(',', '')) * 15, // rough calc
+                                                            estimated_annual_heat_loss_kwh: parseInt(data.loss.replace(/,/g, '')),
+                                                            estimated_annual_cost_eur: parseInt(data.cost.replace(/[^\d]/g, '')),
+                                                            estimated_co2_emissions_kg: parseInt(data.co2.replace(/,/g, '')),
+                                                            present_value_eur: parseInt(data.cost.replace(/[^\d]/g, '')) * 15,
                                                             key_driver: data.target
                                                         },
                                                         images: {
-                                                            rgb_png_base64: data.rgb,
-                                                            thermal_png_base64: data.thermal,
-                                                            overlay_png_base64: data.rgb,
-                                                            boxed_rgb_png_base64: data.rgb
+                                                            rgb_png_base64: data.images.rgb,
+                                                            thermal_png_base64: data.images.thermal,
+                                                            overlay_png_base64: data.images.overlay || data.images.rgb,
+                                                            boxed_rgb_png_base64: data.images.boxed || data.images.rgb
                                                         }
                                                     },
-                                                    raw: { artifacts: { rgb_image_base64_png: data.rgb, thermal_image_base64_png: data.thermal } }
+                                                    raw: {
+                                                        artifacts: {
+                                                            rgb_image_base64_png: data.images.rgb,
+                                                            thermal_image_base64_png: data.images.thermal,
+                                                            overlay_image_base64_png: data.images.overlay,
+                                                            boxed_rgb_image_base64_png: data.images.boxed
+                                                        }
+                                                    }
                                                 };
                                                 navigate('/Results', { state: { result: payload } });
                                             }}>
@@ -294,7 +335,11 @@ export default function Dashboard() {
                                         </div>
                                     </>
                                 );
-                            })()}
+                            })() : (
+                                <div className="p-8 text-center text-slate-500">
+                                    No detailed report data available for this building.
+                                </div>
+                            )}
                         </DialogContent>
                     </Dialog>
 
