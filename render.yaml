@@ -4,7 +4,7 @@ services:
     env: docker
     dockerfilePath: Dockerfile
     plan: standard
-    autoDeploy: false
+    autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.18
