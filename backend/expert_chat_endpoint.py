@@ -66,6 +66,92 @@ Rules:
 - Do NOT mention guaranteed savings, retrofit ROI, or subsidy eligibility.
 - Do not invent citations or claim to have read proprietary documents.
 Tone: professional, precise, accessible.
+
+### ThermalAI's Own Scientific Model
+
+ThermalAI uses an image-based heat-loss screening pipeline:
+1. **AI Segmentation** (SAM): RGB images are segmented into wall, window, and door masks.
+2. **Hotspot Detection**: Thermal images are analyzed using percentile thresholding (default: 95th
+   percentile) to identify thermally anomalous areas. Hotspots are clipped to the façade mask
+   (excluding ground, cars, sky).
+3. **ΔT Proxy Method**: Instantaneous heat loss is estimated as:
+   Q_inst = A_hotspot × (T_inside − T_outside) × scale_factor [W]
+   This is then annualized using degree-hours:
+   k = Q_inst / ΔT_capture; Annual_kWh = k × degree_hours / 1000
+4. **U-value Comparative Method**: If U-values are provided (current vs improved), savings are
+   computed as: ΔQ_annual = (U_current − U_improved) × Area × HDD × 24 / 1000 [kWh/yr]
+5. Both methods run in parallel per component (wall, window, door).
+
+This is a *screening-level* approach: it provides directional estimates from field imagery without
+requiring access to construction drawings or detailed material data.
+
+### Thermal Bridges and the Ψ Coefficient
+
+A thermal bridge is a localized disruption in the thermal envelope's homogeneity (geometry or
+conductivity) that causes increased heat transfer and localized surface temperature drops.
+Common locations: window-to-wall junctions, balcony connections, corners, lintels.
+
+The **linear thermal transmittance coefficient Ψ** [W/(m·K)] quantifies the *additional* heat
+flow caused by a thermal bridge beyond what 1D U-value calculations predict:
+  Ψ = (Q_total − Q_ref) / (ΔT × L)
+where Q_total is the actual heat flow through the junction (from 2D/3D FEM), Q_ref is the
+sum of reference component flows, ΔT is the indoor-outdoor temperature difference, and L is
+the bridge length.
+
+Thermal bridges can account for 5–10% of total building heat losses. Window-to-wall junctions
+are a major contributor, especially in well-insulated buildings where the relative share of
+thermal bridge losses increases.
+
+**EN ISO 14683** provides catalog Ψ-values for common junction types. **EN ISO 10211** defines
+the numerical simulation methodology (2D/3D FEM, e.g., TRISCO, THERM, COMSOL). Catalog values
+may differ by ~20% from actual values; numerical simulations are ~95% consistent.
+
+### AI-Based Thermal Bridge Analysis (Scientific Reports, Nature, 2025)
+
+A recent peer-reviewed publication (Scientific Reports, 2025, s41598-025-16811-x) proposes
+using a Mamdani-type Fuzzy System (FS) as a surrogate model for predicting Ψ at window-to-wall
+connections. Key aspects:
+
+- **Training data**: 378 samples from 3D FEM simulations (TRISCO, EN ISO 10211 compliant)
+- **Inputs (5 variables)**:
+  1. λ_w: thermal conductivity of load-bearing wall layer [W/(m·K)]
+  2. th_w: thickness of load-bearing wall [cm]
+  3. λ_i: thermal conductivity of insulation [W/(m·K)]
+  4. th_i: thickness of insulation [mm]
+  5. o: window offset into the insulation layer [mm]
+- **Output**: Ψ [W/(m·K)]
+- **Accuracy**: RMSE = 2.23 × 10⁻⁴ (extremely precise)
+- **Key findings**:
+  * Shifting windows into the insulation layer can reduce Ψ by up to 40%
+  * Insulation material type and thickness have the dominant influence
+  * Higher wall material λ_w → lower Ψ (counterintuitive)
+  * The FS generalizes well to unseen configurations within the training range
+  * Unlike neural networks, fuzzy rules are interpretable ("gray box")
+
+### How ThermalAI Differs from the Nature Article Approach
+
+| Aspect | ThermalAI | Nature Article FS |
+|---|---|---|
+| Purpose | Field screening of existing buildings | Design-time optimization of new construction |
+| Input | Thermal + RGB images | Geometric/material parameters only |
+| Scope | Full façade (wall + window + door) | Window-to-wall junction only |
+| Physics | ΔT proxy + U-value method | 3D FEM → Fuzzy surrogate of Ψ |
+| AI role | Segmentation (SAM) + hotspot detection | Approximation of FEM results |
+| Thermal bridges | Partially captured by hotspot detection, but not explicitly quantified as Ψ | Explicitly quantified as Ψ |
+| Standards | Implicit (U-value lookups) | Explicit (EN ISO 10211, 14683, 6946) |
+
+When a user asks about thermal bridges visible in their thermal images (e.g., warm lines along
+window frames), explain that ThermalAI's hotspot detection captures these visually but
+attributes them to wall or window area. The Ψ coefficient approach from the scientific
+literature would provide a more precise quantification of the junction-specific loss.
+Both approaches are complementary: ThermalAI for rapid field screening, FEM/FS methods for
+detailed design optimization.
+
+### Important Positioning
+ThermalAI is a screening and decision-support tool. It is NOT a certified energy audit,
+NOT a regulatory compliance certificate, and NOT a replacement for detailed engineering analysis.
+The Nature article's FS approach is likewise a surrogate model, not a replacement for full FEM.
+Both tools accelerate professional workflows but require domain expertise for interpretation.
 """.strip()
 
 MODE_INSTRUCTIONS = {
@@ -166,7 +252,7 @@ def _call_llm(user_message: str, mode: str) -> str:
     resp = client.chat.completions.create(
         model=model_name,
         temperature=0.3,
-        max_tokens=650,
+        max_tokens=1200,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "system", "content": f"Mode: {chosen_mode}\n{mode_text}\n\n{SAFETY_RULES}"},
