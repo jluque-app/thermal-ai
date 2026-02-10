@@ -277,22 +277,22 @@ export default function Dashboard() {
                                         <div className="grid md:grid-cols-4 gap-4 mt-4">
                                             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                                                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Annual Loss</p>
-                                                <span className="text-xl font-bold text-slate-900">{data.loss}</span> <span className="text-xs text-slate-500">kWh</span>
+                                                <span className="text-xl font-bold text-slate-900">{data.headline?.estimated_annual_heat_loss_kwh || data.headline?.loss || data.loss}</span> <span className="text-xs text-slate-500">kWh</span>
                                                 <Zap className="w-6 h-6 text-emerald-100 absolute right-2 top-2" />
                                             </div>
                                             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                                                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Cost</p>
-                                                <span className="text-xl font-bold text-slate-900">{data.cost}</span> <span className="text-xs text-slate-500">/yr</span>
+                                                <span className="text-xl font-bold text-slate-900">€{data.headline?.estimated_annual_cost_eur || data.headline?.cost || data.cost}</span> <span className="text-xs text-slate-500">/yr</span>
                                                 <Coins className="w-6 h-6 text-amber-100 absolute right-2 top-2" />
                                             </div>
                                             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                                                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Emissions</p>
-                                                <span className="text-xl font-bold text-slate-900">{data.co2}</span> <span className="text-xs text-slate-500">kg</span>
+                                                <span className="text-xl font-bold text-slate-900">{data.headline?.estimated_co2_emissions_kg || data.headline?.co2 || data.co2}</span> <span className="text-xs text-slate-500">kg</span>
                                                 <CloudFog className="w-6 h-6 text-blue-100 absolute right-2 top-2" />
                                             </div>
                                             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                                                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Target</p>
-                                                <span className="text-sm font-bold text-emerald-600">{data.target}</span>
+                                                <span className="text-sm font-bold text-emerald-600">{data.headline?.key_driver || data.headline?.target || data.target}</span>
                                             </div>
                                         </div>
 
@@ -300,16 +300,18 @@ export default function Dashboard() {
                                             <div className="space-y-1">
                                                 <p className="text-xs font-semibold text-slate-500 uppercase">Original RGB</p>
                                                 <div className="aspect-[4/3] bg-slate-200 rounded-lg overflow-hidden border border-slate-300">
-                                                    <img src={data.images.rgb} className="w-full h-full object-cover" alt="RGB" />
+                                                    <img src={data.images?.rgb_png_base64 || data.images?.rgb} className="w-full h-full object-cover" alt="RGB" />
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-xs font-semibold text-slate-500 uppercase">Thermal Scan & AI Overlay</p>
+                                                <p className="text-xs font-semibold text-slate-500 uppercase">AI Analysis Overlay</p>
                                                 <div className="aspect-[4/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-300 relative group">
                                                     {/* Toggle between thermal and overlay on hover/click could be cool, for now show Overlay if available */}
-                                                    <img src={data.images.overlay || data.images.thermal} className="w-full h-full object-contain" alt="Thermal/Overlay" />
-                                                    <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded">
-                                                        AI Heat Detection
+                                                    <img src={data.images?.overlay_png_base64 || data.images?.thermal_png_base64 || data.images?.overlay} className="w-full h-full object-contain" alt="Thermal/Overlay" />
+                                                    {/* Hover to compare */}
+                                                    <img src={data.images?.thermal_png_base64 || data.images?.thermal} className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300" alt="Raw Thermal" />
+                                                    <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        Hovering Raw Thermal
                                                     </div>
                                                 </div>
                                             </div>
