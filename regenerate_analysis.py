@@ -20,8 +20,8 @@ PROJECTS = [
     },
     {
         "id": "building_student",
-        "rgb_path": GYOR_PILOT_DIR / "building_student/rgb.jpg",
-        "thermal_path": GYOR_PILOT_DIR / "building_student/thermal.jpg",
+        "rgb_path": GYOR_PILOT_DIR / "building_student/rgb_v2.jpg",
+        "thermal_path": GYOR_PILOT_DIR / "building_student/thermal_v2.jpg",
         "output_dir": GYOR_PILOT_DIR / "building_student"
     }
 ]

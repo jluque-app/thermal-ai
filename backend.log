@@ -1,0 +1,16 @@
+INFO:     Started server process [6354]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+WARNING: ML libraries (torch/segment_anything) not found. Running in LITE mode.
+DEBUG: app_improved.py is at /Users/jluque/.gemini/antigravity/scratch/thermal_ai/backend/app_improved.py
+DEBUG: Looking for frontend at /Users/jluque/.gemini/antigravity/scratch/thermal_ai/frontend/dist
+DEBUG: Exists? True
+DEBUG: Contents of dist: ['index.html', 'demo_thermal.jpg', 'demo_rgb.jpg', 'gyor_pilot', 'assets']
+Startup: model loading kicked off in background.
+WARN: loading segmentation model failed, falling back to mock: RuntimeError('MODEL_GDRIVE_URL is not set (Render Environment Variable).')
+MockSegmentationModel initialized.
+MockSegmentationModel loaded (Fallback).
+Billing tables ensured.
+INFO:     127.0.0.1:52495 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52496 - "POST /analyze HTTP/1.1" 200 OK

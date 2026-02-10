@@ -107,8 +107,8 @@ export default function Dashboard() {
                     reportData: {
                         loss: "126,000", cost: "€15,120", co2: "25,200", target: "Uninsulated Panel Facade",
                         images: {
-                            rgb: "/gyor_pilot/building_student/rgb.jpg",
-                            thermal: "/gyor_pilot/building_student/thermal.jpg",
+                            rgb: "/gyor_pilot/building_student/rgb_v2.jpg",
+                            thermal: "/gyor_pilot/building_student/thermal_v2.jpg",
                             overlay: "/gyor_pilot/building_student/overlay.jpg", // Generated!
                             boxed: "/gyor_pilot/building_student/boxed.jpg"      // Generated!
                         }

@@ -44,14 +44,19 @@ from pydantic import BaseModel, EmailStr
 # -----------------------------
 try:
     import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    cv2 = None
+    CV2_AVAILABLE = False
+
+try:
     import torch
     import torchvision.transforms as transforms
     from segment_anything import sam_model_registry, SamAutomaticMaskGenerator
     ML_AVAILABLE = True
 except ImportError:
-    print("WARNING: ML libraries (torch/cv2/segment_anything) not found. Running in LITE mode.")
+    print("WARNING: ML libraries (torch/segment_anything) not found. Running in LITE mode.")
     ML_AVAILABLE = False
-    cv2 = None
     torch = None
     transforms = None
     sam_model_registry = None
@@ -1624,7 +1629,7 @@ async def analyze(
     auto_register: str = Form(default="true"),  # NEW: allow disabling registration if needed
 ):
     # Check if ML/Image libs are available
-    if not ML_AVAILABLE or not IMAGE_LIBS_AVAILABLE:
+    if not (ML_AVAILABLE or CV2_AVAILABLE) or not IMAGE_LIBS_AVAILABLE:
         # Return a mock response if ML libs are missing (Vercel LITE mode)
         print("Warning: ML/Image libs missing but proceeding to try analysis...")
         pass
@@ -1699,7 +1704,7 @@ async def analyze(
     thr_img = _resize_max(thr_img, max_side=1024)
 
     # >>> KEY CHANGE: thermal → RGB registration
-    if _safe_bool(auto_register, default=True):
+    if _safe_bool(auto_register, default=True) and CV2_AVAILABLE:
         thr_img, registration_meta = register_thermal_to_rgb(vis_img, thr_img)
     else:
         # maintain old behavior if disabled
