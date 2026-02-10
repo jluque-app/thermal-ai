@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ChevronRight, BarChart3, ShieldCheck, Zap, Image as ImageIcon, Target, Check } from "lucide-react";
 import { LoginDialog } from "@/components/LoginDialog";
