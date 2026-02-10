@@ -67,7 +67,7 @@ const CitySelection = () => {
 
                 <div className="mt-12 flex flex-col items-center gap-4">
                     <Button
-                        onClick={() => navigate('/AppHome')}
+                        onClick={() => navigate('/')}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-6 text-lg rounded-full shadow-lg shadow-emerald-200 transition-all transform hover:scale-105"
                     >
                         Start New Analysis
