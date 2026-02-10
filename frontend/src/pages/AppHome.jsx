@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ChevronRight, BarChart3, ShieldCheck, Zap, Image as ImageIcon, Target, Check } from "lucide-react";
 import { LoginDialog } from "@/components/LoginDialog";
@@ -8,8 +8,17 @@ import { useAuth } from '@/lib/AuthContext';
 
 export default function AppHome() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth(); // Changed from isAuthenticated, navigateToLogin
     const [loginOpen, setLoginOpen] = useState(false);
+
+    useEffect(() => {
+        if (location.state?.openLogin) {
+            setLoginOpen(true);
+            // Clear state to avoid reopening on refresh? 
+            // window.history.replaceState({}, document.title); // Optional
+        }
+    }, [location.state]);
 
     const handleLogin = () => {
         setLoginOpen(true);

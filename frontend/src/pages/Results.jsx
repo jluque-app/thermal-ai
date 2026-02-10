@@ -64,6 +64,10 @@ export default function Results() {
         try {
           const r = await fetch(val);
           if (!r.ok) throw new Error(`Failed to fetch ${val}: ${r.statusText}`);
+          const contentType = r.headers.get("content-type");
+          if (!contentType || !contentType.startsWith("image/")) {
+            throw new Error(`Invalid content-type: ${contentType}`);
+          }
           const b = await r.blob();
           return new Promise((resolve) => {
             const reader = new FileReader();

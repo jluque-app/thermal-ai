@@ -3,10 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Building2, MapPin, ArrowRight } from "lucide-react";
 
+import { useAuth } from '@/lib/AuthContext';
+
 const CitySelection = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const handleSelectCity = (city) => {
+        if (!user) {
+            navigate('/', { state: { openLogin: true } });
+            return;
+        }
         // Navigate to Dashboard with city state
         navigate('/Dashboard', { state: { selectedCity: city } });
     };

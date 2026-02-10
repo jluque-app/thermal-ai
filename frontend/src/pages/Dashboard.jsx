@@ -75,12 +75,17 @@ export default function Dashboard() {
                 {
                     id: 'real_demo', lat: 52.5418, lng: 13.4135, status: 'Completed', rating: 'poor', addr: 'Berlin Property (Real Analysis)', type: 'Residential Block', sqft: '1,680 m²',
                     reportData: {
-                        loss: "14,500", cost: "€1,740", co2: "2,900", target: "Uninsulated Façade",
+                        headline: {
+                            estimated_annual_heat_loss_kwh: "14,500",
+                            estimated_annual_cost_eur: "1,740",
+                            estimated_co2_emissions_kg: "2,900",
+                            key_driver: "Uninsulated Façade"
+                        },
                         images: {
-                            rgb: "/demo_rgb.jpg",
-                            thermal: "/demo_thermal.jpg",
-                            overlay: "/demo_rgb.jpg", // Fallback (or generate real one if avail)
-                            boxed: "/demo_rgb.jpg"
+                            rgb_png_base64: "/demo_rgb.jpg",
+                            thermal_png_base64: "/demo_thermal.jpg",
+                            overlay_png_base64: "/demo_rgb.jpg",
+                            boxed_rgb_png_base64: "/demo_rgb.jpg"
                         }
                     }
                 },
@@ -93,24 +98,35 @@ export default function Dashboard() {
                 {
                     id: 'gyor_1', lat: 47.6825, lng: 17.6044, status: 'Completed', rating: 'poor', addr: '9025 Gyor, Esze Tamas utca 13', type: 'Residential (Brick)', sqft: '192 m²', loss: 'Critical', savings: '€1,450/yr',
                     reportData: {
-                        loss: "12,100", cost: "€1,450", co2: "2,400", target: "Uninsulated Roof/Facade",
+                        headline: {
+                            estimated_annual_heat_loss_kwh: "12,100",
+                            estimated_annual_cost_eur: "1,450",
+                            estimated_co2_emissions_kg: "2,400",
+                            key_driver: "Uninsulated Roof/Facade"
+                        },
                         images: {
-                            rgb: "/gyor_pilot/building_1/rgb.jpg",
-                            thermal: "/gyor_pilot/building_1/thermal.jpg",
-                            overlay: "/gyor_pilot/building_1/overlay.jpg", // Generated!
-                            boxed: "/gyor_pilot/building_1/boxed.jpg"      // Generated!
+                            rgb_png_base64: "/gyor_pilot/building_1/rgb.jpg",
+                            thermal_png_base64: "/gyor_pilot/building_1/thermal.jpg",
+                            overlay_png_base64: "/gyor_pilot/building_1/overlay.jpg",
+                            boxed_rgb_png_base64: "/gyor_pilot/building_1/boxed.jpg"
                         }
                     }
                 },
                 {
                     id: 'gyor_student', lat: 47.694444, lng: 17.625278, status: 'Completed', rating: 'poor', addr: 'Egyetem ter 1, 9026 Gyor', type: 'K0 Student Hostel', sqft: '1,680 m²', loss: 'Critical', savings: '€15,200/yr',
                     reportData: {
-                        loss: "126,000", cost: "€15,120", co2: "25,200", target: "Uninsulated Panel Facade",
+                        headline: {
+                            estimated_annual_heat_loss_kwh: "126,000",
+                            estimated_annual_cost_eur: "15,120",
+                            estimated_co2_emissions_kg: "25,200",
+                            present_value_eur: "226,800",
+                            key_driver: "Uninsulated Panel Facade"
+                        },
                         images: {
-                            rgb: "/gyor_pilot/building_student/rgb_v2.jpg",
-                            thermal: "/gyor_pilot/building_student/thermal_v2.jpg",
-                            overlay: "/gyor_pilot/building_student/overlay.jpg", // Generated!
-                            boxed: "/gyor_pilot/building_student/boxed.jpg"      // Generated!
+                            rgb_png_base64: "/gyor_pilot/building_student/rgb_v2.jpg",
+                            thermal_png_base64: "/gyor_pilot/building_student/thermal_v2.jpg",
+                            overlay_png_base64: "/gyor_pilot/building_student/overlay.jpg",
+                            boxed_rgb_png_base64: "/gyor_pilot/building_student/boxed.jpg"
                         }
                     }
                 }
