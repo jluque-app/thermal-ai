@@ -176,7 +176,7 @@ export default function Layout({ children, currentPageName }) {
             {user ? (
               <div className="flex flex-col gap-3 mt-4">
                 <div className="text-sm text-slate-400">{user.email}</div>
-                <Button onClick={() => navigate('/NewAnalysis')} className="w-full bg-brand-teal-500 text-brand-navy-900">Dashboard</Button>
+                <Button onClick={() => navigate('/CitySelection')} className="w-full bg-brand-teal-500 text-brand-navy-900">Dashboard</Button>
                 <Button variant="outline" onClick={handleLogout} className="w-full border-white/10 text-slate-300">Log out</Button>
               </div>
             ) : (

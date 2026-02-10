@@ -65,7 +65,13 @@ const CitySelection = () => {
                     </div>
                 </div>
 
-                <div className="mt-8 text-center">
+                <div className="mt-12 flex flex-col items-center gap-4">
+                    <Button
+                        onClick={() => navigate('/AppHome')}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-6 text-lg rounded-full shadow-lg shadow-emerald-200 transition-all transform hover:scale-105"
+                    >
+                        Start New Analysis
+                    </Button>
                     <Button variant="ghost" onClick={() => navigate('/Dashboard')} className="text-slate-400 hover:text-slate-600">
                         Skip to Default Dashboard
                     </Button>

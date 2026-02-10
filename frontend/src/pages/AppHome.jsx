@@ -39,26 +39,28 @@ export default function AppHome() {
                         ThermalAI transforms thermal inspections into actionable financial data.
                         Scale your retrofit projects with AI-powered analysis of heat loss, cost matching, and ROI projection.
                     </p>
-                    <Button
-                        onClick={() => navigate('/NewAnalysis')}
-                        className="h-14 px-8 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold transition-all mr-4 shadow-lg shadow-emerald-500/30"
-                    >
-                        Start a New Analysis
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={() => navigate('/ExpertPreview')}
-                        className="h-14 px-8 text-lg border-emerald-600 text-emerald-700 hover:bg-emerald-50 rounded-full font-bold transition-all"
-                    >
-                        Try ThermalAI Expert (Preview)
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        onClick={() => navigate('/PlanSelection')}
-                        className="h-14 px-8 text-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 rounded-full font-medium transition-all"
-                    >
-                        View Pricing
-                    </Button>
+                    <div className="mt-10 flex flex-wrap items-center gap-4">
+                        <Button
+                            onClick={() => navigate('/NewAnalysis')}
+                            className="h-14 px-8 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold transition-all shadow-lg shadow-emerald-500/30"
+                        >
+                            Start a New Analysis
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => navigate('/ExpertPreview')}
+                            className="h-14 px-8 text-lg border-emerald-600 text-emerald-700 hover:bg-emerald-50 rounded-full font-bold transition-all"
+                        >
+                            Try ThermalAI Expert (Preview)
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            onClick={() => navigate('/PlanSelection')}
+                            className="h-14 px-8 text-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 rounded-full font-medium transition-all"
+                        >
+                            View Pricing
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -133,7 +135,7 @@ export default function AppHome() {
 
                 <div className="text-center mt-16">
                     <Button
-                        onClick={() => navigate(user ? '/Dashboard' : '/PlanSelection')}
+                        onClick={() => navigate('/NewAnalysis')}
                         className="h-14 px-10 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold shadow-lg hover:shadow-emerald-500/30 transition-all"
                     >
                         Get Started <ArrowRight className="ml-2 w-5 h-5" />
