@@ -3,6 +3,7 @@ import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 // import { base44 } from "@/api/base44Client"; // Removed
 import { getUserIdentity } from "@/components/userIdentity";
+import { useAuth } from "@/lib/AuthContext";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,9 +39,10 @@ function extractErrorMessage(payload, fallback = "Something went wrong. Please t
   return fallback;
 }
 
-import { useAuth } from "@/lib/AuthContext";
+
 
 export default function NewAnalysis() {
+  console.log("NewAnalysis mounting");
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoadingAuth, navigateToLogin } = useAuth();
 
