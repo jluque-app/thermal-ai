@@ -75,6 +75,13 @@ def build_report(raw: dict) -> dict:
     else:
         confidence = "Low"
 
+    key_driver = None
+    # crude driver: highest component kWh
+    if rows:
+        top = max([r for r in rows if isinstance(r.get("heat_loss_kwh"), (int, float))], key=lambda r: r["heat_loss_kwh"], default=None)
+        if top:
+            key_driver = f"Most estimated losses attributed to {top['label']}."
+
     # --- FIX: Calculate Financials & CO2 for Frontend ---
     co2_kg = round(annual_kwh * 0.2, 0) if annual_kwh else None
     
