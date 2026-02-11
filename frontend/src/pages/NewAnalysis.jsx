@@ -13,11 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Upload, Image as ImageIcon, AlertCircle, Info, ArrowRight, Zap, Thermometer, Settings2 } from "lucide-react";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import UsageBadge from "../components/UsageBadge";
-import { cn } from "@/lib/utils";
 
 const THERMAL_API_ANALYZE_URL = "/analyze";
 const OVERLAY_MIN = 80;
@@ -44,13 +41,13 @@ function extractErrorMessage(payload, fallback = "Something went wrong. Please t
 export default function NewAnalysis() {
   console.log("NewAnalysis mounting");
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoadingAuth, navigateToLogin } = useAuth();
+  const { user, isAuthenticated, isLoadingAuth } = useAuth();
 
   useEffect(() => {
     if (!isLoadingAuth && !isAuthenticated) {
-      navigateToLogin();
+      navigate('/login');
     }
-  }, [isLoadingAuth, isAuthenticated, navigateToLogin]);
+  }, [isLoadingAuth, isAuthenticated, navigate]);
 
   // Files
   const [rgbImage, setRgbImage] = useState(null);
