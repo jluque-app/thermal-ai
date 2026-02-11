@@ -44,6 +44,9 @@ export default function NewAnalysis() {
   const { user, isAuthenticated, isLoadingAuth } = useAuth();
 
   useEffect(() => {
+    // Clear previous results to avoid stale data
+    sessionStorage.removeItem("thermalai_last_result_payload");
+
     if (!isLoadingAuth && !isAuthenticated) {
       navigate('/login');
     }

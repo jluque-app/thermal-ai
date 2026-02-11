@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Download, Share2, ArrowLeft, Zap, TrendingUp, AlertTriangle, CloudFog, Coins, FileText, Presentation } from "lucide-react";
 
 function formatNumber(n, decimals = 0) {
-  const x = typeof n === "string" ? Number(n) : n;
+  if (n === null || n === undefined) return "—";
+  const x = typeof n === "string" ? Number(n.replace(/,/g, '')) : n;
   if (typeof x !== "number" || Number.isNaN(x)) return "—";
   return x.toLocaleString(undefined, { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
 }
@@ -18,25 +19,27 @@ export default function Results() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const payload = useMemo(() => {
-    return location?.state?.result ?? JSON.parse(sessionStorage.getItem("thermalai_last_result_payload") || "null");
+    const data = location?.state?.result ?? JSON.parse(sessionStorage.getItem("thermalai_last_result_payload") || "null");
+    console.log("Results Payload Debug:", data);
+    return data;
   }, [location?.state]);
 
   const report = payload?.report || null;
   const meta = report?.meta || {};
 
   // Images
-  // Images - Robust fallback for various API response structures
-  const overlayB64 = report?.images?.overlay_png_base64 || payload?.raw?.artifacts?.overlay_image_base64_png || payload?.overlay_base64 || null;
   const rgbB64 = report?.images?.rgb_png_base64 || payload?.raw?.artifacts?.rgb_image_base64_png || payload?.rgb_base64 || null;
+  const rgbBoxedB64 = report?.images?.rgb_boxed_png_base64 || payload?.raw?.artifacts?.rgb_boxed_image_base64_png || payload?.rgb_boxed_base64 || null;
   const thermalB64 = report?.images?.thermal_png_base64 || payload?.raw?.artifacts?.thermal_image_base64_png || payload?.thermal_base64 || payload?.thermal_image_base64 || null;
-  const boxedB64 = report?.images?.boxed_rgb_png_base64 || payload?.raw?.artifacts?.boxed_rgb_image_base64_png || payload?.boxed_base64 || payload?.boxed_image_base64 || null;
+  const thermalBoxedB64 = report?.images?.thermal_boxed_png_base64 || payload?.raw?.artifacts?.thermal_boxed_image_base64_png || payload?.thermal_boxed_base64 || null;
 
   // Metrics
   const annualTotalKwh = report?.headline?.estimated_annual_heat_loss_kwh || null;
   const annualTotalEur = report?.headline?.estimated_annual_cost_eur || null;
-  const co2Kg = report?.headline?.estimated_co2_emissions_kg || (annualTotalKwh ? annualTotalKwh * 0.2 : null); // Fallback estimate if missing
+  const co2Kg = report?.headline?.estimated_co2_emissions_kg || (annualTotalKwh ? annualTotalKwh * 0.2 : null); // Fallback estimate
   const pvEur = report?.headline?.present_value_eur || (annualTotalEur ? annualTotalEur * 15 : null); // Fallback PV estimate
 
+  // Helper for image src
   function b64img(b64) {
     if (!b64) return null;
     if (b64.startsWith('/') || b64.startsWith('http')) return b64;
@@ -44,90 +47,59 @@ export default function Results() {
   }
 
   // Export Handlers
-  // Export Handlers
   const handleExport = async (format) => {
     if (!payload) return;
 
-    const apiBase = meta?.api_base || "";
-    const endpoint = `${apiBase}/v1/report/ppt${format === 'pdf' ? '?format=pdf' : ''}`;
-
-    // Helper to fetch and convert path to base64 if needed
-    const ensureBase64 = async (val) => {
-      if (!val) return null;
-      if (val.startsWith("data:image")) {
-        // strip prefix if needed by backend, but backend likely handles it. 
-        // Actually app_improved backend expects RAW base64 usually, or handles data uri.
-        // Let's safe-strip.
-        return val.replace(/^data:image\/[a-z]+;base64,/, "");
-      }
-      if (val.startsWith("/") || val.startsWith("http")) {
-        try {
-          const r = await fetch(val);
-          if (!r.ok) throw new Error(`Failed to fetch ${val}: ${r.statusText}`);
-          const contentType = r.headers.get("content-type");
-          if (!contentType || !contentType.startsWith("image/")) {
-            throw new Error(`Invalid content-type: ${contentType}`);
-          }
-          const b = await r.blob();
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const res = reader.result;
-              resolve(res.replace(/^data:image\/[a-z]+;base64,/, ""));
-            };
-            reader.readAsDataURL(b);
-          });
-        } catch (e) {
-          console.error("Failed to convert image to b64", val, e);
-          return null;
-        }
-      }
-      return val; // assume already raw b64
-    };
-
     try {
-      // PRE-PROCESS payload to ensure images are base64
+      const apiBase = meta?.api_base || "https://api.thermalai.eu";
+      let endpoint = `${apiBase}/v1/report/ppt`;
+      if (format === 'pdf') {
+        endpoint = `${apiBase}/v1/report/pdf`;
+      }
+
+      // Helper to fetch and convert path to base64 if needed
+      const ensureBase64 = async (val) => {
+        if (!val) return null;
+        if (val.startsWith("data:image")) return val.replace(/^data:image\/[a-z]+;base64,/, "");
+        if (val.startsWith("/") || val.startsWith("http")) {
+          try {
+            const r = await fetch(val);
+            if (!r.ok) return null;
+            const b = await r.blob();
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result.replace(/^data:image\/[a-z]+;base64,/, ""));
+              reader.readAsDataURL(b);
+            });
+          } catch (e) { return null; }
+        }
+        return val;
+      };
+
+      // PRE-PROCESS payload logic...
       const reportImages = payload.report?.images || {};
       const rawArtifacts = payload.raw?.artifacts || {};
-
-      // We need to mutate a copy
       const exportPayload = JSON.parse(JSON.stringify(payload));
       if (!exportPayload.report) exportPayload.report = {};
       if (!exportPayload.report.images) exportPayload.report.images = {};
 
-      // Convert key images
-      const imgKeys = ["rgb_png_base64", "thermal_png_base64", "overlay_png_base64", "boxed_rgb_png_base64"];
-
+      const imgKeys = ["rgb_png_base64", "rgb_boxed_png_base64", "thermal_png_base64", "thermal_boxed_png_base64"];
       for (const k of imgKeys) {
-        // Source priority: current report > raw > fallback values we calculated in component
         let val = reportImages[k] || rawArtifacts[k.replace("_png", "_image")];
-
-        // In the component we derived: overlayB64, rgbB64, etc. 
-        // Let's trust the component's resolved values as best source of truth for "what user sees"
         if (k === "rgb_png_base64") val = rgbB64;
+        if (k === "rgb_boxed_png_base64") val = rgbBoxedB64;
         if (k === "thermal_png_base64") val = thermalB64;
-        if (k === "overlay_png_base64") val = overlayB64;
-        if (k === "boxed_rgb_png_base64") val = boxedB64;
-
-        if (val) {
-          exportPayload.report.images[k] = await ensureBase64(val);
-        }
+        if (k === "thermal_boxed_png_base64") val = thermalBoxedB64;
+        if (val) exportPayload.report.images[k] = await ensureBase64(val);
       }
 
       const resp = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          report: exportPayload.report || {},
-          raw: exportPayload.raw || {}
-        })
+        body: JSON.stringify({ report: exportPayload.report || {}, raw: exportPayload.raw || {} })
       });
 
-      if (!resp.ok) {
-        const err = await resp.text();
-        alert(`Export failed: ${err}`);
-        return;
-      }
+      if (!resp.ok) throw new Error("API Export Failed");
 
       const blob = await resp.blob();
       const url = window.URL.createObjectURL(blob);
@@ -138,9 +110,14 @@ export default function Results() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+
     } catch (e) {
-      console.error("Export error:", e);
-      alert("Failed to export. Is the backend running?");
+      console.warn("Backend export failed, falling back to print.", e);
+      if (format === 'pdf') {
+        window.print();
+      } else {
+        alert("PowerPoint export requires a backend connection. Please use PDF export to print/save.");
+      }
     }
   };
 
@@ -226,6 +203,89 @@ export default function Results() {
           </div>
         </div>
 
+        {/* FINANCIAL IMPACT TABLE */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Coins className="w-5 h-5 text-amber-500" /> Financial Impact Analysis
+            </h3>
+          </div>
+          <div className="p-6">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-slate-600">
+                <thead className="text-xs text-slate-700 uppercase bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-3">Time Horizon</th>
+                    <th className="px-6 py-3">Est. Energy Savings</th>
+                    <th className="px-6 py-3">Est. Cost of Inaction</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="bg-white border-b border-slate-100">
+                    <td className="px-6 py-4 font-medium text-slate-900">1 Year</td>
+                    <td className="px-6 py-4 text-emerald-600 font-bold">€{formatNumber(report?.financials?.savings_1y || payload?.financials?.savings_1y)}</td>
+                    <td className="px-6 py-4 text-red-600">€{formatNumber(report?.financials?.cost_1y || payload?.financials?.cost_1y)}</td>
+                  </tr>
+                  <tr className="bg-white border-b border-slate-100">
+                    <td className="px-6 py-4 font-medium text-slate-900">5 Years</td>
+                    <td className="px-6 py-4 text-emerald-600 font-bold">€{formatNumber(report?.financials?.savings_5y || payload?.financials?.savings_5y)}</td>
+                    <td className="px-6 py-4 text-red-600">€{formatNumber(report?.financials?.cost_5y || payload?.financials?.cost_5y)}</td>
+                  </tr>
+                  <tr className="bg-white">
+                    <td className="px-6 py-4 font-medium text-slate-900">15 Years</td>
+                    <td className="px-6 py-4 text-emerald-600 font-bold">€{formatNumber(report?.financials?.savings_15y || payload?.financials?.savings_15y)}</td>
+                    <td className="px-6 py-4 text-red-600">€{formatNumber(report?.financials?.cost_15y || payload?.financials?.cost_15y)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* HEAT LOSS BREAKDOWN */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-500" /> Heat Loss Breakdown
+            </h3>
+          </div>
+          <div className="p-6 grid md:grid-cols-2 gap-8 items-center">
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600">
+                Analysis of the building envelope reveals the distribution of heat loss across major elements.
+                Targeting <strong>{(report?.breakdown?.walls_kwh > report?.breakdown?.windows_kwh) ? "Walls" : "Windows"}</strong> will yield the highest immediate return.
+              </p>
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between text-sm font-medium">
+                  <span className="flex items-center gap-2">🪟 Windows</span>
+                  <span>{formatNumber(report?.breakdown?.windows_kwh || payload?.breakdown?.windows_kwh)} kWh</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2.5">
+                  <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: `${(Number(String(report?.breakdown?.windows_kwh).replace(/,/g, '')) / (Number(String(report?.breakdown?.windows_kwh).replace(/,/g, '')) + Number(String(report?.breakdown?.walls_kwh).replace(/,/g, '')))) * 100}%` }}></div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between text-sm font-medium">
+                  <span className="flex items-center gap-2">🧱 Walls</span>
+                  <span>{formatNumber(report?.breakdown?.walls_kwh || payload?.breakdown?.walls_kwh)} kWh</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2.5">
+                  <div className="bg-red-500 h-2.5 rounded-full" style={{ width: `${(Number(String(report?.breakdown?.walls_kwh).replace(/,/g, '')) / (Number(String(report?.breakdown?.windows_kwh).replace(/,/g, '')) + Number(String(report?.breakdown?.walls_kwh).replace(/,/g, '')))) * 100}%` }}></div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col justify-center items-center p-6 bg-slate-50 rounded-lg border border-slate-100">
+              <div className="text-center">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Priority Retrofit</p>
+                <h4 className="text-2xl font-black text-slate-900 mb-1">
+                  {(report?.breakdown?.walls_kwh > report?.breakdown?.windows_kwh) ? "External Wall Insulation" : "Window Replacement"}
+                </h4>
+                <p className="text-emerald-600 font-medium text-sm">Recommended Action</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* IMAGES (2x2 Grid) */}
         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
           <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
@@ -233,72 +293,53 @@ export default function Results() {
           </h3>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {/* 1. Overlay (Primary) */}
+            {/* 1. Normal RGB */}
             <div className="space-y-2">
-              <p className="text-xs text-slate-500 uppercase font-semibold">AI Hotspot Overlay</p>
-              <div className="relative aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden border border-slate-200 group">
-                {overlayB64 ?
-                  <img src={b64img(overlayB64)} className="w-full h-full object-cover" alt="Overlay" />
-                  : <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No Overlay</div>
-                }
-              </div>
-            </div>
-
-            {/* 2. RGB */}
-            <div className="space-y-2">
-              <p className="text-xs text-slate-500 uppercase font-semibold">Original RGB</p>
+              <p className="text-xs text-slate-500 uppercase font-semibold">Normal RGB</p>
               <div className="relative aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                 {rgbB64 ?
-                  <img src={b64img(rgbB64)} className="w-full h-full object-cover" alt="RGB" />
+                  <img src={b64img(rgbB64)} className="w-full h-full object-cover" alt="Normal RGB" />
                   : <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No RGB</div>
                 }
               </div>
             </div>
 
-            {/* 3. Thermal */}
+            {/* 2. RGB with Boxed */}
             <div className="space-y-2">
-              <p className="text-xs text-slate-500 uppercase font-semibold">Raw Thermal</p>
+              <p className="text-xs text-slate-500 uppercase font-semibold">RGB with AI Boxes</p>
+              <div className="relative aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                {rgbBoxedB64 ?
+                  <img src={b64img(rgbBoxedB64)} className="w-full h-full object-cover" alt="RGB Boxed" />
+                  : <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No Boxed RGB</div>
+                }
+              </div>
+            </div>
+
+            {/* 3. Normal Thermal */}
+            <div className="space-y-2">
+              <p className="text-xs text-slate-500 uppercase font-semibold">Normal Thermal</p>
               <div className="relative aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                 {thermalB64 ?
-                  <img src={b64img(thermalB64)} className="w-full h-full object-contain bg-slate-900" alt="Thermal" />
+                  <img src={b64img(thermalB64)} className="w-full h-full object-contain bg-slate-900" alt="Normal Thermal" />
                   : <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No Thermal</div>
                 }
               </div>
             </div>
 
-            {/* 4. Boxed/Annotated */}
+            {/* 4. Thermal with Boxed */}
             <div className="space-y-2">
-              <p className="text-xs text-slate-500 uppercase font-semibold">AI Detection Boxes</p>
+              <p className="text-xs text-slate-500 uppercase font-semibold">Thermal with AI Boxes</p>
               <div className="relative aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
-                {boxedB64 ?
-                  <img src={b64img(boxedB64)} className="w-full h-full object-cover" alt="Boxed" />
-                  : <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No Detections</div>
+                {thermalBoxedB64 ?
+                  <img src={b64img(thermalBoxedB64)} className="w-full h-full object-cover" alt="Thermal Boxed" />
+                  : <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No Boxed Thermal</div>
                 }
               </div>
             </div>
           </div>
         </div>
 
-        {/* FINDINGS */}
-        <div className="bg-white rounded-xl p-8 border border-slate-200 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Key Findings & Recommendations</h3>
-          <div className="prose max-w-none text-slate-600 text-sm">
-            <p className="leading-relaxed">
-              Based on the analysis, significant thermal anomalies were detected. The key driver of heat loss appears to be
-              <strong className="text-emerald-700"> {report?.headline?.key_driver || "the building envelope"}</strong>.
-            </p>
-            <ul className="mt-4 space-y-2">
-              <li>• Verify window seals for potential air leakage.</li>
-              <li>• Inspect insulation continuity in identified hotspot areas.</li>
-              <li>• Consider thermographic re-inspection after remedial works.</li>
-            </ul>
-          </div>
-          <div className="mt-8 flex justify-end">
-            <Button variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => navigate('/ExpertPreview')}>
-              Ask AI Expert for Interpretation →
-            </Button>
-          </div>
-        </div>
+
 
       </div>
     </div>
