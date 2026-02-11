@@ -1909,9 +1909,11 @@ async def analyze(
             "overlay_image_base64_png": overlay_b64,
             "rgb_image_base64_png": rgb_b64,
             
-            # Frontend keys
+            # Frontend keys (Results.jsx expects specific names)
             "boxed_rgb_image_base64_png": rgb_boxes_b64,
+            "rgb_boxed_image_base64_png": rgb_boxes_b64, # match Results.jsx
             "thermal_image_base64_png": thermal_b64,
+            "thermal_boxed_image_base64_png": thermal_boxes_b64, # match Results.jsx
 
             # PPT Builder keys (legacy/backend support)
             "rgb_hotspot_boxes_base64_png": rgb_boxes_b64,
