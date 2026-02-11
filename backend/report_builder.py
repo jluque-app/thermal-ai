@@ -9,8 +9,8 @@ def build_report(raw: dict) -> dict:
     totals = results.get("totals", {}) or {}
     comps = results.get("components", {}) or {}
 
-    annual_kwh = totals.get("annual_kwh_delta")
-    annual_cost = totals.get("annual_cost_delta")
+    annual_kwh = totals.get("annual_kwh_theoretical")
+    annual_cost = totals.get("annual_cost_theoretical")
 
     # Component breakdown using annual_kwh_delta by component
     rows = []
@@ -28,7 +28,7 @@ def build_report(raw: dict) -> dict:
         if key.lower() == "roof":
             continue
             
-        kwh = c.get("annual_kwh_delta")
+        kwh = c.get("annual_kwh_total_loss")
         cost = (kwh * price) if isinstance(kwh, (int, float)) and isinstance(price, (int, float)) else None
         share = (100.0 * kwh / total) if total and isinstance(kwh, (int, float)) else None
         rows.append({

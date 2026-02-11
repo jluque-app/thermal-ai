@@ -127,6 +127,7 @@ from thermal_core_improved import (
     annualize_proxy_kwh,
     infer_u_value,
     annual_kwh_saved_u_method,
+    annual_total_loss_u_method,
     compute_multi_year_costs,
 )
 from climate_data_improved import get_outdoor_temperature_c, degree_hours_below_base
@@ -1798,6 +1799,8 @@ async def analyze(
         "annual_cost_delta": 0.0,
         "annual_kwh_u": 0.0,
         "annual_cost_u": 0.0,
+        "annual_kwh_theoretical": 0.0,
+        "annual_cost_theoretical": 0.0,
     }
 
     for name, cmask in masks.items():
@@ -1830,20 +1833,31 @@ async def analyze(
             u_imp = _safe_float(u_improved_door) or infer_u_value(material_improved_door)
 
         hdd_equiv = float(deg_hours) / 24.0
-        annual_kwh_u = annual_kwh_saved_u_method(u_cur, u_imp, hs_area_m2, hdd_equiv)
+        # Savings (Retrofit Potential) - based on Area
+        # We assume retrofit applies to the WHOLE component area if we want to be realistic about "savings potential"
+        # BUT originally this was likely just hotspot area.
+        # Let's align savings with the new "Total Theoretical" approach -> Savings on the whole area.
+        comp_total_area = float(comp_area[name])
+        annual_kwh_u = annual_kwh_saved_u_method(u_cur, u_imp, comp_total_area, hdd_equiv)
+
+        # Total Theoretical Loss (Current State)
+        annual_kwh_theoretical = annual_total_loss_u_method(u_cur, comp_total_area, hdd_equiv)
 
         annual_cost_delta = round(annual_kwh_delta * fuel_price, 2)
         annual_cost_u = round(annual_kwh_u * fuel_price, 2)
+        annual_cost_theoretical = round(annual_kwh_theoretical * fuel_price, 2)
 
         components[name] = {
             "component_pixels": comp_pixels,
             "hotspot_pixels_in_component": hs_in_comp,
             "hotspot_ratio_in_component": round(hs_ratio_in_comp, 6),
             "hotspot_area_m2": round(hs_area_m2, 4),
+            "component_total_area_m2": round(comp_total_area, 4),
             "hotspot_area_source": hs_area_src,
             "instantaneous_watts": round(inst_w, 4),
-            "annual_kwh_delta": round(annual_kwh_delta, 4),
-            "annual_kwh_u": round(annual_kwh_u, 4),
+            "annual_kwh_hotspot_delta": round(annual_kwh_delta, 4),
+            "annual_kwh_savings_potential": round(annual_kwh_u, 4),
+            "annual_kwh_total_loss": round(annual_kwh_theoretical, 4)
         }
 
         totals["instantaneous_watts"] += inst_w
@@ -1851,9 +1865,12 @@ async def analyze(
         totals["annual_cost_delta"] += annual_cost_delta
         totals["annual_kwh_u"] += annual_kwh_u
         totals["annual_cost_u"] += annual_cost_u
+        totals["annual_kwh_theoretical"] += annual_kwh_theoretical
+        totals["annual_cost_theoretical"] += annual_cost_theoretical
 
     totals = {k: (round(v, 4) if "kwh" in k or "watts" in k else round(v, 2)) for k, v in totals.items()}
-    totals["multi_year_costs_delta"] = compute_multi_year_costs(totals["annual_cost_delta"], discount_rate=dr)
+    # Use the Theoretical Total Cost for the multi-year projection
+    totals["multi_year_costs_delta"] = compute_multi_year_costs(totals["annual_cost_theoretical"], discount_rate=dr)
 
     analysis_id = uuid.uuid4().hex[:10]
     api_base = "" # Let frontend handle base URL via proxy
@@ -1954,6 +1971,7 @@ async def analyze(
 
         # propagate registration meta into meta as well if you want to use it in PPT
         "registration": registration_meta,
+        "version": "v2026.02.11-TotalLossFix", # Force update & verification stamp
     })
     report["meta"] = report_meta
 

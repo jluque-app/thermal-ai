@@ -48,7 +48,8 @@ export default function NewAnalysis() {
     sessionStorage.removeItem("thermalai_last_result_payload");
 
     if (!isLoadingAuth && !isAuthenticated) {
-      navigate('/login');
+      // Redirect to home with login modal open (since /login route doesn't exist)
+      navigate('/', { state: { openLogin: true } });
     }
   }, [isLoadingAuth, isAuthenticated, navigate]);
 

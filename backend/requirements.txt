@@ -19,3 +19,4 @@ openai>=1.40.0
 email-validator>=2.0.0
 psycopg2-binary==2.9.9
 stripe>=5.0.0
+# Force Rebuild 2026-02-11

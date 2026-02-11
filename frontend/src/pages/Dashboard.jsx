@@ -32,15 +32,7 @@ const icons = {
     poor: createIcon('#ef4444'),   // Red-500
 };
 
-// Prototype Data: German Neighborhood (Example: Prenzlauer Berg, Berlin)
-const BERLIN_DEMO_BUILDINGS = [
-    { id: 'real_demo', lat: 52.5200, lng: 13.4050, addr: "Berlin Property (Real Analysis)", type: "Residential Block", rating: "poor", loss: "Critical", savings: "€1,740/yr" },
-    { id: 1, lat: 52.5414, lng: 13.4132, addr: "Danziger Str. 55", type: "Apartment Block", rating: "poor", loss: "High", savings: "€4,200/yr" },
-    { id: 2, lat: 52.5420, lng: 13.4145, addr: "Danziger Str. 62", type: "Office", rating: "medium", loss: "Moderate", savings: "€1,800/yr" },
-    { id: 3, lat: 52.5408, lng: 13.4110, addr: "Lychener Str. 12", type: "Historical", rating: "good", loss: "Low", savings: "€450/yr" },
-    { id: 4, lat: 52.5425, lng: 13.4150, addr: "Pappelallee 22", type: "Retail", rating: "poor", loss: "Critical", savings: "€6,100/yr" },
-    { id: 5, lat: 52.5410, lng: 13.4125, addr: "Raumerstr. 8", type: "Mixed Use", rating: "medium", loss: "Moderate", savings: "€2,100/yr" },
-];
+
 
 function ChangeView({ center, zoom }) {
     const map = useMap();
@@ -60,84 +52,12 @@ export default function Dashboard() {
 
     // City Configurations
     const cityConfigs = {
-        berlin: {
-            center: [52.5418, 13.4135],
-            zoom: 13,
-            buildings: [
-                {
-                    id: '1', lat: 52.5200, lng: 13.4050, status: 'Completed', rating: 'good', addr: 'Alexanderplatz 1, Berlin', type: 'Commercial Office', sqft: '12,500',
-                    reportData: null // No detailed report for this one
-                },
-                {
-                    id: '2', lat: 52.5220, lng: 13.4000, status: 'In Progress', rating: 'medium', addr: 'Karl-Liebknecht-Str. 14', type: 'Mixed Use', sqft: '8,200',
-                    reportData: null
-                },
-                {
-                    id: 'real_demo', lat: 52.5418, lng: 13.4135, status: 'Completed', rating: 'poor', addr: 'Berlin Property (Real Analysis)', type: 'Residential Block', sqft: '1,680 m²',
-                    reportData: {
-                        headline: {
-                            estimated_annual_heat_loss_kwh: "12,500",
-                            estimated_annual_cost_eur: "1,500",
-                            estimated_co2_emissions_kg: "2,500",
-                            key_driver: "Uninsulated Wall"
-                        },
-                        financials: {
-                            savings_1y: "1,500",
-                            savings_5y: "7,500",
-                            savings_15y: "22,500",
-                            cost_1y: "1,500",
-                            cost_5y: "7,500",
-                            cost_15y: "22,500"
-                        },
-                        breakdown: {
-                            windows_kwh: "4,500",
-                            walls_kwh: "8,000"
-                        },
-                        images: {
-                            rgb_png_base64: "/demo_rgb.jpg",
-                            thermal_png_base64: "/demo_thermal.jpg",
-                            overlay_png_base64: "/demo_rgb.jpg",
-                            rgb_boxed_png_base64: "/demo_rgb.jpg",
-                            thermal_boxed_png_base64: "/demo_thermal.jpg"
-                        }
-                    }
-                },
-            ]
-        },
+
         gyor: {
             center: [47.688, 17.615], // Adjusted center to fit both
             zoom: 13,
             buildings: [
-                {
-                    id: 'gyor_1', lat: 47.6825, lng: 17.6044, status: 'Completed', rating: 'poor', addr: '9025 Gyor, Esze Tamas utca 13', type: 'Residential (Brick)', sqft: '192 m²', loss: 'Critical', savings: '€1,150/yr',
-                    reportData: {
-                        headline: {
-                            estimated_annual_heat_loss_kwh: "9,600",
-                            estimated_annual_cost_eur: "1,150",
-                            estimated_co2_emissions_kg: "1,920",
-                            key_driver: "Uninsulated Wall"
-                        },
-                        financials: {
-                            savings_1y: "1,150",
-                            savings_5y: "5,750",
-                            savings_15y: "17,250",
-                            cost_1y: "1,150",
-                            cost_5y: "5,750",
-                            cost_15y: "17,250"
-                        },
-                        breakdown: {
-                            windows_kwh: "3,100",
-                            walls_kwh: "6,500"
-                        },
-                        images: {
-                            rgb_png_base64: "/gyor_pilot/building_1/rgb.jpg",
-                            thermal_png_base64: "/gyor_pilot/building_1/thermal.jpg",
-                            overlay_png_base64: "/gyor_pilot/building_1/overlay.jpg",
-                            rgb_boxed_png_base64: "/gyor_pilot/building_1/overlay.jpg",
-                            thermal_boxed_png_base64: "/gyor_pilot/building_1/boxed.jpg"
-                        }
-                    }
-                },
+
                 {
                     id: 'gyor_student', lat: 47.694444, lng: 17.625278, status: 'Completed', rating: 'poor', addr: 'Egyetem ter 1, 9026 Gyor', type: 'K0 Student Hostel', type: 'Student Hostel', sqft: '1,680 m²', loss: 'Critical', savings: '€12,600/yr',
                     reportData: {

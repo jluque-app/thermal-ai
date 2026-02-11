@@ -27,27 +27,7 @@ const CitySelection = () => {
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-8">
-                    {/* Berlin Card */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all cursor-pointer group"
-                        onClick={() => handleSelectCity('berlin')}>
-                        <div className="h-48 bg-slate-800 relative">
-                            {/* Placeholder for Berlin Image */}
-                            <div className="absolute inset-0 flex items-center justify-center text-slate-600 bg-slate-200">
-                                <span className="font-bold text-2xl opacity-20">BERLIN</span>
-                            </div>
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
-                            <div className="absolute bottom-4 left-4 text-white">
-                                <h2 className="text-2xl font-bold flex items-center gap-2">Berlin <span className="text-sm font-normal bg-white/20 px-2 py-0.5 rounded backdrop-blur-sm">DE</span></h2>
-                                <p className="text-slate-300 text-sm">Demo Portfolio</p>
-                            </div>
-                        </div>
-                        <div className="p-6">
-                            <p className="text-slate-600 mb-4">Original demo dataset featuring residential and commercial properties in the city center.</p>
-                            <Button className="w-full group-hover:bg-emerald-600 transition-colors" variant="outline">
-                                View Dashboard <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
-                        </div>
-                    </div>
+
 
                     {/* Gyor Card */}
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all cursor-pointer group"

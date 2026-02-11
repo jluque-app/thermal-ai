@@ -138,6 +138,16 @@ def annual_kwh_saved_u_method(
     return round(annual_kwh, 4)
 
 
+def annual_total_loss_u_method(
+    u_current: float,
+    area_m2: float,
+    heating_degree_days: float
+) -> float:
+    """Calculates total theoretical annual loss (kWh) using U-value."""
+    annual_kwh = float(u_current) * float(area_m2) * float(heating_degree_days) * 24.0 / 1000.0
+    return round(annual_kwh, 4)
+
+
 def compute_multi_year_costs(
     annual_cost_eur: float,
     horizons=(1, 5, 10, 20, 30),
