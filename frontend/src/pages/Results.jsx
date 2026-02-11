@@ -31,7 +31,7 @@ export default function Results() {
   const rgbB64 = report?.images?.rgb_png_base64 || payload?.raw?.artifacts?.rgb_image_base64_png || payload?.rgb_base64 || null;
   const rgbBoxedB64 = report?.images?.rgb_boxed_png_base64 || payload?.raw?.artifacts?.rgb_boxed_image_base64_png || payload?.rgb_boxed_base64 || null;
   const thermalB64 = report?.images?.thermal_png_base64 || payload?.raw?.artifacts?.thermal_image_base64_png || payload?.thermal_base64 || payload?.thermal_image_base64 || null;
-  const thermalBoxedB64 = report?.images?.thermal_boxed_png_base64 || payload?.raw?.artifacts?.thermal_boxed_image_base64_png || payload?.thermal_boxed_base64 || null;
+  const thermalBoxedB64 = report?.images?.thermal_boxed_png_base64 || payload?.raw?.artifacts?.thermal_boxed_image_base64_png || payload?.raw?.artifacts?.thermal_hotspot_boxes_base64_png || payload?.thermal_boxed_base64 || null;
 
   // Metrics
   const annualTotalKwh = report?.headline?.estimated_annual_heat_loss_kwh || null;
@@ -51,15 +51,18 @@ export default function Results() {
     if (!payload) return;
 
     try {
-      const apiBase = meta?.api_base || "https://api.thermalai.eu";
-      let endpoint = `${apiBase}/v1/report/ppt`;
-      if (format === 'pdf') {
-        endpoint = `${apiBase}/v1/report/pdf`;
-      }
+      // Use absolute backend URL (no proxy guaranteed on manual Render deploys)
+      const backendUrl = "https://thermal-ai.onrender.com";
+      let endpoint = `${backendUrl}/v1/report/ppt`;
 
+      // If PDF, use the same endpoint but with ?format=pdf to trigger LibreOffice conversion
+      if (format === 'pdf') {
+        endpoint = `${backendUrl}/v1/report/ppt?format=pdf`;
+      }
       // Helper to fetch and convert path to base64 if needed
       const ensureBase64 = async (val) => {
         if (!val) return null;
+        if (typeof val !== 'string') return null;
         if (val.startsWith("data:image")) return val.replace(/^data:image\/[a-z]+;base64,/, "");
         if (val.startsWith("/") || val.startsWith("http")) {
           try {
@@ -83,14 +86,32 @@ export default function Results() {
       if (!exportPayload.report) exportPayload.report = {};
       if (!exportPayload.report.images) exportPayload.report.images = {};
 
-      const imgKeys = ["rgb_png_base64", "rgb_boxed_png_base64", "thermal_png_base64", "thermal_boxed_png_base64"];
-      for (const k of imgKeys) {
-        let val = reportImages[k] || rawArtifacts[k.replace("_png", "_image")];
-        if (k === "rgb_png_base64") val = rgbB64;
-        if (k === "rgb_boxed_png_base64") val = rgbBoxedB64;
-        if (k === "thermal_png_base64") val = thermalB64;
-        if (k === "thermal_boxed_png_base64") val = thermalBoxedB64;
-        if (val) exportPayload.report.images[k] = await ensureBase64(val);
+      // Mapping keys to what backend expects
+      // Backend (ppt_endpoint.py) expects:
+      // - rgb_png_base64
+      // - overlay_png_base64 (crucial for PPT)
+      // - thermal_hotspot_boxes_base64_png
+
+      const keyMap = {
+        "rgb_png_base64": ["rgb_png_base64", "rgb_image_base64_png"],
+        "overlay_png_base64": ["overlay_png_base64", "overlay_image_base64_png"],
+        "thermal_hotspot_boxes_png_base64": ["thermal_boxed_png_base64", "thermal_boxed_image_base64_png", "thermal_hotspot_boxes_base64_png"]
+      };
+
+      for (const [targetKey, sourceKeys] of Object.entries(keyMap)) {
+        let val = null;
+        for (const k of sourceKeys) {
+          val = reportImages[k] || rawArtifacts[k] || payload[k] || payload.raw?.artifacts?.[k];
+          if (val) break;
+        }
+
+        // Frontend state specific fallbacks
+        if (!val && targetKey === "rgb_png_base64") val = rgbB64;
+        // if (!val && targetKey === "overlay_png_base64") ... (we don't have a distinct state var for overlay, usually comes from artifacts)
+
+        if (val) {
+          exportPayload.report.images[targetKey] = await ensureBase64(val);
+        }
       }
 
       const resp = await fetch(endpoint, {
@@ -99,24 +120,28 @@ export default function Results() {
         body: JSON.stringify({ report: exportPayload.report || {}, raw: exportPayload.raw || {} })
       });
 
-      if (!resp.ok) throw new Error("API Export Failed");
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || "API Export Failed");
+      }
 
       const blob = await resp.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `ThermalAI_Report.${format}`;
+      a.download = `ThermalAI_Report.${format === 'pptx' ? 'pptx' : 'pdf'}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
     } catch (e) {
-      console.warn("Backend export failed, falling back to print.", e);
+      console.warn("Backend export failed, falling back to print/alert.", e);
       if (format === 'pdf') {
+        alert("PDF Generation failed (Backend error). Falling back to browser print.");
         window.print();
       } else {
-        alert("PowerPoint export requires a backend connection. Please use PDF export to print/save.");
+        alert(`PowerPoint export failed: ${e.message || "Unknown Error"}`);
       }
     }
   };
@@ -306,7 +331,7 @@ export default function Results() {
 
             {/* 2. RGB with Boxed */}
             <div className="space-y-2">
-              <p className="text-xs text-slate-500 uppercase font-semibold">RGB with AI Boxes</p>
+              <p className="text-xs text-slate-500 uppercase font-semibold">RGB with Hotspot Boxes</p>
               <div className="relative aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                 {rgbBoxedB64 ?
                   <img src={b64img(rgbBoxedB64)} className="w-full h-full object-cover" alt="RGB Boxed" />
@@ -328,7 +353,7 @@ export default function Results() {
 
             {/* 4. Thermal with Boxed */}
             <div className="space-y-2">
-              <p className="text-xs text-slate-500 uppercase font-semibold">Thermal with AI Boxes</p>
+              <p className="text-xs text-slate-500 uppercase font-semibold">Thermal with Hotspot Boxes</p>
               <div className="relative aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                 {thermalBoxedB64 ?
                   <img src={b64img(thermalBoxedB64)} className="w-full h-full object-cover" alt="Thermal Boxed" />

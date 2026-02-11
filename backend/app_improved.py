@@ -1856,7 +1856,7 @@ async def analyze(
     totals["multi_year_costs_delta"] = compute_multi_year_costs(totals["annual_cost_delta"], discount_rate=dr)
 
     analysis_id = uuid.uuid4().hex[:10]
-    api_base = "https://api.thermalai.eu"
+    api_base = "" # Let frontend handle base URL via proxy
 
     response: Dict[str, Any] = {
         "analysis_id": analysis_id,

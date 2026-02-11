@@ -4,7 +4,7 @@ uvicorn[standard]==0.30.6
 python-multipart==0.0.12
 pillow==10.4.0
 numpy==1.26.4
-opencv-python-headless==4.10.0.84
+opencv-python-headless
 requests==2.32.3
 gdown==5.2.0
 reportlab==4.2.5
@@ -16,7 +16,6 @@ torchvision==0.18.1
 python-pptx==0.6.23
 lxml==5.2.2
 openai>=1.40.0
-email-validator
-psycopg2-binary==2.9.*
-stripe
-psycopg2-binary
+email-validator>=2.0.0
+psycopg2-binary==2.9.9
+stripe>=5.0.0

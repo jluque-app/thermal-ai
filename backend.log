@@ -14,3 +14,8 @@ MockSegmentationModel loaded (Fallback).
 Billing tables ensured.
 INFO:     127.0.0.1:52495 - "POST /analyze HTTP/1.1" 200 OK
 INFO:     127.0.0.1:52496 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55248 - "GET /v1/billing/me?user_id=test&user_email=test%40example.com HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6354]

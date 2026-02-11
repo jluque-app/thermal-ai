@@ -6,3 +6,13 @@ venv
 __pycache__
 *.pyc
 *.DS_Store
+
+requirements.txt
+api/
+backend/
+*.py
+Dockerfile
+render.yaml
+backend.log
+.venv_deps
+.venv_test
