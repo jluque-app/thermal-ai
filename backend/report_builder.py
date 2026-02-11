@@ -19,12 +19,15 @@ def build_report(raw: dict) -> dict:
     currency = "EUR"
 
     label_map = {
-        "wall": "Opaque wall",
+        "wall": "Wall",
         "window": "Openings/windows",
         "door": "Door",
     }
 
     for key, c in comps.items():
+        if key.lower() == "roof":
+            continue
+            
         kwh = c.get("annual_kwh_delta")
         cost = (kwh * price) if isinstance(kwh, (int, float)) and isinstance(price, (int, float)) else None
         share = (100.0 * kwh / total) if total and isinstance(kwh, (int, float)) else None
@@ -72,12 +75,45 @@ def build_report(raw: dict) -> dict:
     else:
         confidence = "Low"
 
-    key_driver = None
-    # crude driver: highest component kWh
-    if rows:
-        top = max([r for r in rows if isinstance(r.get("heat_loss_kwh"), (int, float))], key=lambda r: r["heat_loss_kwh"], default=None)
-        if top:
-            key_driver = f"Most estimated losses attributed to {top['label']}."
+    # --- FIX: Calculate Financials & CO2 for Frontend ---
+    co2_kg = round(annual_kwh * 0.2, 0) if annual_kwh else None
+    
+    # Financial projections (polishing the 'financials' object Results.jsx expects)
+    # Savings often = 100% of losses (theoretical max) or a % of it? 
+    # The frontend labels it "Est. Energy Savings" vs "Cost of Inaction". 
+    # "Cost of Inaction" is simply the cumulative cost of heat loss.
+    # "Savings" is usually the same in these simple models (if you retrofit, you save the loss).
+    
+    financials = {}
+    if annual_cost:
+        financials["cost_1y"] = f"{annual_cost:,.0f}"
+        financials["savings_1y"] = f"{annual_cost:,.0f}"
+        
+        financials["cost_5y"] = f"{annual_cost * 5:,.0f}"
+        financials["savings_5y"] = f"{annual_cost * 5:,.0f}"
+        
+        financials["cost_15y"] = f"{annual_cost * 15:,.0f}"
+        financials["savings_15y"] = f"{annual_cost * 15:,.0f}"
+    
+    # Present Value (15y)
+    pv_eur = annual_cost * 15 if annual_cost else None
+
+    # --- FIX: Restructure Breakdown for Results.jsx ---
+    # Results.jsx expects 'walls_kwh' and 'windows_kwh' directly in report.breakdown
+    breakdown_flat = {"by_component": rows}
+    
+    # Extract specific components for the flat keys
+    wall_data = next((r for r in rows if "Wall" in r["label"]), None)
+    window_data = next((r for r in rows if "window" in r["label"].lower()), None)
+    
+    if wall_data:
+        breakdown_flat["walls_kwh"] = wall_data["heat_loss_kwh"]
+    if window_data:
+        breakdown_flat["windows_kwh"] = window_data["heat_loss_kwh"]
+        
+    # Also ensure there are reasonable defaults if missing (avoid frontend crashes)
+    if "walls_kwh" not in breakdown_flat: breakdown_flat["walls_kwh"] = 0
+    if "windows_kwh" not in breakdown_flat: breakdown_flat["windows_kwh"] = 0
 
     report = {
         "meta": {
@@ -90,10 +126,13 @@ def build_report(raw: dict) -> dict:
         "headline": {
             "estimated_annual_heat_loss_kwh": annual_kwh,
             "estimated_annual_cost_eur": annual_cost,
+            "estimated_co2_emissions_kg": co2_kg,
+            "present_value_eur": pv_eur,
             "confidence": confidence,
             "key_driver": key_driver,
         },
-        "breakdown": {"by_component": rows},
+        "breakdown": breakdown_flat,
+        "financials": financials,
         "hotspots": {
             "count": None,  # you don't yet have hotspot instances; keep honest
             "severity": {"high": None, "medium": None, "low": None},

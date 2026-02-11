@@ -76,16 +76,29 @@ export default function Dashboard() {
                     id: 'real_demo', lat: 52.5418, lng: 13.4135, status: 'Completed', rating: 'poor', addr: 'Berlin Property (Real Analysis)', type: 'Residential Block', sqft: '1,680 m²',
                     reportData: {
                         headline: {
-                            estimated_annual_heat_loss_kwh: "14,500",
-                            estimated_annual_cost_eur: "1,740",
-                            estimated_co2_emissions_kg: "2,900",
-                            key_driver: "Uninsulated Façade"
+                            estimated_annual_heat_loss_kwh: "12,500",
+                            estimated_annual_cost_eur: "1,500",
+                            estimated_co2_emissions_kg: "2,500",
+                            key_driver: "Uninsulated Wall"
+                        },
+                        financials: {
+                            savings_1y: "1,500",
+                            savings_5y: "7,500",
+                            savings_15y: "22,500",
+                            cost_1y: "1,500",
+                            cost_5y: "7,500",
+                            cost_15y: "22,500"
+                        },
+                        breakdown: {
+                            windows_kwh: "4,500",
+                            walls_kwh: "8,000"
                         },
                         images: {
                             rgb_png_base64: "/demo_rgb.jpg",
                             thermal_png_base64: "/demo_thermal.jpg",
                             overlay_png_base64: "/demo_rgb.jpg",
-                            boxed_rgb_png_base64: "/demo_rgb.jpg"
+                            rgb_boxed_png_base64: "/demo_rgb.jpg",
+                            thermal_boxed_png_base64: "/demo_thermal.jpg"
                         }
                     }
                 },
@@ -96,37 +109,63 @@ export default function Dashboard() {
             zoom: 13,
             buildings: [
                 {
-                    id: 'gyor_1', lat: 47.6825, lng: 17.6044, status: 'Completed', rating: 'poor', addr: '9025 Gyor, Esze Tamas utca 13', type: 'Residential (Brick)', sqft: '192 m²', loss: 'Critical', savings: '€1,450/yr',
+                    id: 'gyor_1', lat: 47.6825, lng: 17.6044, status: 'Completed', rating: 'poor', addr: '9025 Gyor, Esze Tamas utca 13', type: 'Residential (Brick)', sqft: '192 m²', loss: 'Critical', savings: '€1,150/yr',
                     reportData: {
                         headline: {
-                            estimated_annual_heat_loss_kwh: "12,100",
-                            estimated_annual_cost_eur: "1,450",
-                            estimated_co2_emissions_kg: "2,400",
-                            key_driver: "Uninsulated Roof/Facade"
+                            estimated_annual_heat_loss_kwh: "9,600",
+                            estimated_annual_cost_eur: "1,150",
+                            estimated_co2_emissions_kg: "1,920",
+                            key_driver: "Uninsulated Wall"
+                        },
+                        financials: {
+                            savings_1y: "1,150",
+                            savings_5y: "5,750",
+                            savings_15y: "17,250",
+                            cost_1y: "1,150",
+                            cost_5y: "5,750",
+                            cost_15y: "17,250"
+                        },
+                        breakdown: {
+                            windows_kwh: "3,100",
+                            walls_kwh: "6,500"
                         },
                         images: {
                             rgb_png_base64: "/gyor_pilot/building_1/rgb.jpg",
                             thermal_png_base64: "/gyor_pilot/building_1/thermal.jpg",
                             overlay_png_base64: "/gyor_pilot/building_1/overlay.jpg",
-                            boxed_rgb_png_base64: "/gyor_pilot/building_1/boxed.jpg"
+                            rgb_boxed_png_base64: "/gyor_pilot/building_1/overlay.jpg",
+                            thermal_boxed_png_base64: "/gyor_pilot/building_1/boxed.jpg"
                         }
                     }
                 },
                 {
-                    id: 'gyor_student', lat: 47.694444, lng: 17.625278, status: 'Completed', rating: 'poor', addr: 'Egyetem ter 1, 9026 Gyor', type: 'K0 Student Hostel', sqft: '1,680 m²', loss: 'Critical', savings: '€15,200/yr',
+                    id: 'gyor_student', lat: 47.694444, lng: 17.625278, status: 'Completed', rating: 'poor', addr: 'Egyetem ter 1, 9026 Gyor', type: 'K0 Student Hostel', type: 'Student Hostel', sqft: '1,680 m²', loss: 'Critical', savings: '€12,600/yr',
                     reportData: {
                         headline: {
-                            estimated_annual_heat_loss_kwh: "126,000",
-                            estimated_annual_cost_eur: "15,120",
-                            estimated_co2_emissions_kg: "25,200",
-                            present_value_eur: "226,800",
-                            key_driver: "Uninsulated Panel Facade"
+                            estimated_annual_heat_loss_kwh: "105,000",
+                            estimated_annual_cost_eur: "12,600",
+                            estimated_co2_emissions_kg: "21,000",
+                            present_value_eur: "189,000",
+                            key_driver: "Uninsulated Panel Wall"
+                        },
+                        financials: {
+                            savings_1y: "12,600",
+                            savings_5y: "63,000",
+                            savings_15y: "189,000",
+                            cost_1y: "12,600",
+                            cost_5y: "63,000",
+                            cost_15y: "189,000"
+                        },
+                        breakdown: {
+                            windows_kwh: "35,000",
+                            walls_kwh: "70,000"
                         },
                         images: {
                             rgb_png_base64: "/gyor_pilot/building_student/rgb_v2.jpg",
                             thermal_png_base64: "/gyor_pilot/building_student/thermal_v2.jpg",
                             overlay_png_base64: "/gyor_pilot/building_student/overlay.jpg",
-                            boxed_rgb_png_base64: "/gyor_pilot/building_student/boxed.jpg"
+                            rgb_boxed_png_base64: "/gyor_pilot/building_student/overlay.jpg",
+                            thermal_boxed_png_base64: "/gyor_pilot/building_student/thermal_v2.jpg"
                         }
                     }
                 }
@@ -304,10 +343,10 @@ export default function Dashboard() {
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-xs font-semibold text-slate-500 uppercase">AI Analysis Overlay</p>
+                                                <p className="text-xs font-semibold text-slate-500 uppercase">Thermal with AI Boxes</p>
                                                 <div className="aspect-[4/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-300 relative group">
                                                     {/* Toggle between thermal and overlay on hover/click could be cool, for now show Overlay if available */}
-                                                    <img src={data.images?.overlay_png_base64 || data.images?.thermal_png_base64 || data.images?.overlay} className="w-full h-full object-contain" alt="Thermal/Overlay" />
+                                                    <img src={data.images?.thermal_boxed_png_base64 || data.images?.overlay_png_base64 || data.images?.overlay} className="w-full h-full object-contain" alt="Thermal Boxed" />
                                                     {/* Hover to compare */}
                                                     <img src={data.images?.thermal_png_base64 || data.images?.thermal} className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300" alt="Raw Thermal" />
                                                     <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
@@ -320,30 +359,29 @@ export default function Dashboard() {
                                         <div className="mt-6 flex justify-end gap-2">
                                             <Button variant="outline" onClick={() => setShowResultModal(false)}>Close</Button>
                                             <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
+                                                const h = data.headline || {};
+                                                const parseVal = (v) => {
+                                                    if (typeof v === 'number') return v;
+                                                    if (!v) return 0;
+                                                    return parseInt(String(v).replace(/,/g, '').replace(/[^\d]/g, ''), 10);
+                                                };
+
                                                 const payload = {
                                                     report: {
-                                                        meta: { city: isGyor ? "Győr, Hungary" : "Berlin, Germany", address: selectedBuilding.addr },
-                                                        headline: {
-                                                            estimated_annual_heat_loss_kwh: parseInt(data.loss.replace(/,/g, '')),
-                                                            estimated_annual_cost_eur: parseInt(data.cost.replace(/[^\d]/g, '')),
-                                                            estimated_co2_emissions_kg: parseInt(data.co2.replace(/,/g, '')),
-                                                            present_value_eur: parseInt(data.cost.replace(/[^\d]/g, '')) * 15,
-                                                            key_driver: data.target
+                                                        meta: {
+                                                            city: isGyor ? "Győr, Hungary" : "Berlin, Germany",
+                                                            address: selectedBuilding.addr
                                                         },
-                                                        images: {
-                                                            rgb_png_base64: data.images.rgb,
-                                                            thermal_png_base64: data.images.thermal,
-                                                            overlay_png_base64: data.images.overlay || data.images.rgb,
-                                                            boxed_rgb_png_base64: data.images.boxed || data.images.rgb
-                                                        }
-                                                    },
-                                                    raw: {
-                                                        artifacts: {
-                                                            rgb_image_base64_png: data.images.rgb,
-                                                            thermal_image_base64_png: data.images.thermal,
-                                                            overlay_image_base64_png: data.images.overlay,
-                                                            boxed_rgb_image_base64_png: data.images.boxed
-                                                        }
+                                                        headline: {
+                                                            estimated_annual_heat_loss_kwh: parseVal(h.estimated_annual_heat_loss_kwh),
+                                                            estimated_annual_cost_eur: parseVal(h.estimated_annual_cost_eur),
+                                                            estimated_co2_emissions_kg: parseVal(h.estimated_co2_emissions_kg),
+                                                            present_value_eur: h.present_value_eur ? parseVal(h.present_value_eur) : (parseVal(h.estimated_annual_cost_eur) * 15),
+                                                            key_driver: h.key_driver || "Uninsulated Facade"
+                                                        },
+                                                        financials: data.financials,
+                                                        breakdown: data.breakdown,
+                                                        images: data.images // Struct matches Results.jsx expectation
                                                     }
                                                 };
                                                 navigate('/Results', { state: { result: payload } });
