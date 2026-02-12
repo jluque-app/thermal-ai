@@ -840,6 +840,7 @@ STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 VIP_EMAILS = {e.strip().lower() for e in os.getenv("VIP_EMAILS", "").split(",") if e.strip()}
+VIP_EMAILS.add("jaime@allretech.org")  # Force add founder for dev/debug
 VIP_DOMAINS = {d.strip().lower().lstrip("@") for d in os.getenv("VIP_DOMAINS", "").split(",") if d.strip()}
 
 def _stripe_headers() -> Dict[str, str]:
@@ -848,6 +849,7 @@ def _stripe_headers() -> Dict[str, str]:
     return {"Authorization": f"Bearer {STRIPE_SECRET_KEY}"}
 
 def _is_vip_email(email: Optional[str]) -> bool:
+    print(f"DEBUG: _is_vip_email checking '{email}' against {VIP_EMAILS}")
     if not email:
         return False
     e = email.strip().lower()
@@ -1156,6 +1158,7 @@ def _plan_allows_downloads(ent: Dict[str, Any]) -> bool:
     return bool(ent.get("downloads_allowed")) or ent.get("plan") in ("project", "enterprise", "vip")
 
 def billing_can_analyze_internal(user_id: Optional[str], user_email: Optional[str], consume: bool) -> Dict[str, Any]:
+    print(f"DEBUG: billing_can_analyze_internal called with user_id={user_id}, user_email={user_email}, consume={consume}")
     ent = _get_entitlement(user_id, user_email)
 
     # VIP always allowed
@@ -1789,6 +1792,19 @@ async def analyze(
             "door": seg.counts["door_pixels"] / total_pixels,
         }
         comp_area_src = "relative_only_no_facade_area"
+
+    # --- DEBUG: HOTSPOT STATS ---
+    try:
+        hs_pixels = int(hs.mask.sum())
+        sys.stderr.write(f"DEBUG: Hotspot detection: {hs_pixels} pixels (threshold p{overlay_pct})\n")
+        
+        # Check raw boxes before drawing
+        sys.stderr.write("DEBUG: Generating boxes...\n")
+        raw_boxes = _connected_components_boxes(hs.mask, min_area_px=200)
+        sys.stderr.write(f"DEBUG: Found {len(raw_boxes)} boxes.\n")
+    except Exception as e:
+        sys.stderr.write(f"DEBUG: Failed to log hotspot stats: {e}\n")
+    # ----------------------------
 
     masks = {"wall": seg.wall_mask, "window": seg.window_mask, "door": seg.door_mask}
 

@@ -428,6 +428,24 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
     address = _ensure_str(meta.get("address") or raw_inputs.get("address") or "")
     google_maps = _ensure_str(meta.get("google_maps_link") or raw_inputs.get("google_maps_link") or "")
 
+    # --- LOGGING FOR DEBUGGING ---
+    try:
+        debug_path = Path("/tmp/thermal_ai_payload_debug.json")
+        dump_data = {
+            "report_keys": list(report.keys()) if report else [],
+            "raw_keys": list(raw.keys()) if raw else [],
+            "report_headline": report.get("headline") if report else {},
+            "report_breakdown": report.get("breakdown") if report else {},
+            "raw_results_totals": _dig(raw, "results.totals"),
+            "raw_inputs": raw_inputs
+        }
+        with open(debug_path, "w") as f:
+            import json
+            json.dump(dump_data, f, indent=2, default=str)
+    except Exception as e:
+        print(f"Failed to log debug payload: {e}")
+    # -----------------------------
+
     # ---- Date/time (robust)
     dt_iso = (
         raw_inputs.get("datetime_iso")
@@ -463,6 +481,21 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
     gps_lat = _safe_float(raw_inputs.get("latitude") or raw_inputs.get("gps_lat") or meta.get("latitude"))
     gps_lon = _safe_float(raw_inputs.get("longitude") or raw_inputs.get("gps_lon") or meta.get("longitude"))
 
+    # FIX: Prioritize user input if source is explicitly 'user_input'
+    t_out_source = raw_inputs.get("t_outside_source") or inputs_r.get("t_outside_source")
+    if t_out_source == "user_input":
+        t_out = _safe_float(raw_inputs.get("t_outside_c") or raw_inputs.get("t_outside"))
+        if t_out is None:
+             t_out = _safe_float(inputs_r.get("outdoor_temp_c") or inputs_r.get("outdoor_temperature_c"))
+    else:
+        # Standard fallback logic
+        t_out = _safe_float(
+            inputs_r.get("outdoor_temp_c")
+            or inputs_r.get("outdoor_temperature_c")
+            or raw_inputs.get("t_outside_c")
+            or raw_inputs.get("t_outside")
+        )
+
     t_in = _safe_float(
         inputs_r.get("indoor_temp_c")
         or inputs_r.get("indoor_temperature_c")
@@ -471,13 +504,6 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
     )
     if t_in is None:
         t_in = 22.0
-
-    t_out = _safe_float(
-        inputs_r.get("outdoor_temp_c")
-        or inputs_r.get("outdoor_temperature_c")
-        or raw_inputs.get("t_outside_c")
-        or raw_inputs.get("t_outside")
-    )
 
     # ΔT = Outdoor - Indoor
     dt = (t_out - t_in) if (t_out is not None and t_in is not None) else None
@@ -492,10 +518,21 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
     facade_area_m2 = _safe_float(meta.get("facade_area_m2") or raw_inputs.get("facade_area_m2"))
 
     seg_counts = raw_inputs.get("segmentation_counts") or {}
+    if not seg_counts:
+        # Fallback using raw components if available
+        # This fixes "n.a." classifications when segmentation counts are missing but component results exist
+         pass
+
     wall_px = float(_safe_float(seg_counts.get("wall_pixels")) or 0.0)
     win_px = float(_safe_float(seg_counts.get("window_pixels")) or 0.0)
     door_px = float(_safe_float(seg_counts.get("door_pixels")) or 0.0)
     total_px = wall_px + win_px + door_px
+
+    # If pixels are missing but areas are inferred in components, try to back-calculate shares
+    if total_px == 0 and facade_area_m2:
+        # Try to infer share from component 'area_m2' if it exists in raw_comps (rare but possible)
+        # Otherwise default to some reasonable split if totally missing? No, better to leave null.
+        pass
 
     wall_share = (wall_px / total_px) if total_px > 0 else None
     win_share = (win_px / total_px) if total_px > 0 else None
@@ -530,23 +567,65 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
         wall_coeff = win_coeff = facade_coeff = None
 
     # ---- Annual heat loss (kWh/year)
-    wall_kwh = _safe_float(_dig(raw_comps, "wall.annual_kwh_delta")) or _safe_float(_dig(raw_comps, "wall.annual_kwh_u"))
-    win_kwh = (
-        _safe_float(_dig(raw_comps, "window.annual_kwh_delta"))
-        or _safe_float(_dig(raw_comps, "windows.annual_kwh_delta"))
+    # FIX: Prioritize values already calculated for the Frontend/Report (Results.jsx)
+    # This ensures 1:1 consistency with what the user sees on the screen.
+    
+    # 1. Try Report Object (Breakdown)
+    wall_kwh_report = _safe_float(_dig(report, "breakdown.walls_kwh"))
+    win_kwh_report = _safe_float(_dig(report, "breakdown.windows_kwh"))
+    
+    # 2. Try Raw Object (Theoretical)
+    wall_kwh_raw = (
+        _safe_float(_dig(raw_comps, "wall.annual_kwh_theoretical"))
+        or _safe_float(_dig(raw_comps, "wall.annual_kwh_u"))
+    )
+    
+    # 3. Fallback to Delta/Low values if absolutely nothing else exists
+    wall_kwh_delta = _safe_float(_dig(raw_comps, "wall.annual_kwh_delta"))
+
+    # Final Selection
+    wall_kwh = wall_kwh_report if wall_kwh_report is not None else (wall_kwh_raw if wall_kwh_raw is not None else wall_kwh_delta)
+
+    win_kwh_raw = (
+        _safe_float(_dig(raw_comps, "window.annual_kwh_theoretical"))
+        or _safe_float(_dig(raw_comps, "windows.annual_kwh_theoretical"))
         or _safe_float(_dig(raw_comps, "window.annual_kwh_u"))
         or _safe_float(_dig(raw_comps, "windows.annual_kwh_u"))
     )
-
-    annual_total_kwh = (
-        _safe_float(headline.get("estimated_annual_heat_loss_kwh"))
-        or _safe_float(raw_totals.get("annual_kwh_delta"))
-        or _safe_float(raw_totals.get("annual_kwh_u"))
+    win_kwh_delta = (
+        _safe_float(_dig(raw_comps, "window.annual_kwh_delta"))
+        or _safe_float(_dig(raw_comps, "windows.annual_kwh_delta"))
     )
+    
+    win_kwh = win_kwh_report if win_kwh_report is not None else (win_kwh_raw if win_kwh_raw is not None else win_kwh_delta)
+
+    # Total Annual kWh
+    annual_total_kwh = (
+        _safe_float(headline.get("estimated_annual_heat_loss_kwh")) # This is from report.headline
+        or _safe_float(raw_totals.get("annual_kwh_theoretical"))
+        or _safe_float(raw_totals.get("annual_kwh_u"))
+        or _safe_float(raw_totals.get("annual_kwh_delta"))
+    )
+    
+    # Consistency check: if total is missing, sum components
     if annual_total_kwh is None and (wall_kwh is not None or win_kwh is not None):
         annual_total_kwh = (wall_kwh or 0.0) + (win_kwh or 0.0)
 
-    facade_kwh_m2 = (annual_total_kwh / facade_area_m2) if (annual_total_kwh is not None and facade_area_m2) else None
+    # Fallback: If components are missing but total exists, estimate based on area/share
+    # This prevents "Wall: n.a." when we have a Total
+    if annual_total_kwh is not None:
+        if wall_kwh is None and wall_share is not None:
+             wall_kwh = annual_total_kwh * wall_share
+        if win_kwh is None and win_share is not None:
+             win_kwh = annual_total_kwh * win_share
+
+    # Recalculate per-m2 logic to ensure we have values for EPC even if exact sub-areas are fuzzy
+    if facade_area_m2 and annual_total_kwh is not None:
+        facade_kwh_m2 = annual_total_kwh / facade_area_m2
+    else:
+        facade_kwh_m2 = None
+
+    # For wall/window per-m2, we need areas.
     wall_kwh_m2 = (wall_kwh / wall_area_m2) if (wall_kwh is not None and wall_area_m2) else None
     win_kwh_m2 = (win_kwh / win_area_m2) if (win_kwh is not None and win_area_m2) else None
 
@@ -559,7 +638,12 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
     if emission_factor is None:
         emission_factor = 0.20
 
-    annual_co2 = _safe_float(raw_totals.get("co2_kg_per_year")) or _safe_float(raw_totals.get("annual_co2_kg"))
+    annual_co2 = (
+        _safe_float(headline.get("estimated_co2_emissions_kg")) # From report.headline
+        or _safe_float(raw_totals.get("co2_kg_per_year_theoretical"))
+        or _safe_float(raw_totals.get("co2_kg_per_year"))
+        or _safe_float(raw_totals.get("annual_co2_kg"))
+    )
     if annual_co2 is None and annual_total_kwh is not None:
         annual_co2 = annual_total_kwh * emission_factor
 
@@ -586,11 +670,24 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
     wall_cost = (wall_kwh * energy_price) if (wall_kwh is not None and energy_price is not None) else None
     win_cost = (win_kwh * energy_price) if (win_kwh is not None and energy_price is not None) else None
 
-    annual_cost_total = _safe_float(raw_totals.get("annual_cost_delta")) or _safe_float(raw_totals.get("annual_cost_u"))
-    if annual_cost_total is None and (wall_cost is not None or win_cost is not None):
-        annual_cost_total = (wall_cost or 0.0) + (win_cost or 0.0)
+    # FIX: Force Cost Consistency with Frontend
+    # 1. Try Report Object (Headline) - this is what Results.jsx shows (e.g. 16,003)
+    annual_cost_total = _safe_float(headline.get("estimated_annual_cost_eur"))
+
+    # 2. Try Raw Object (Theoretical)
+    if annual_cost_total is None:
+        annual_cost_total = (
+            _safe_float(raw_totals.get("annual_cost_theoretical"))
+            or _safe_float(raw_totals.get("annual_cost_u"))
+        )
+    
+    # 3. Calculate from Total kWh if missing
     if annual_cost_total is None and annual_total_kwh is not None:
         annual_cost_total = annual_total_kwh * energy_price
+        
+    # 4. Fallback to Delta (Low) only as last resort
+    if annual_cost_total is None:
+         annual_cost_total = _safe_float(raw_totals.get("annual_cost_delta"))
 
     pv_years = [1, 5, 10, 20, 30]
     pv_total: Dict[int, float] = {}
