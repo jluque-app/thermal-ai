@@ -607,9 +607,11 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
         or _safe_float(raw_totals.get("annual_kwh_delta"))
     )
     
-    # Consistency check: if total is missing, sum components
-    if annual_total_kwh is None and (wall_kwh is not None or win_kwh is not None):
-        annual_total_kwh = (wall_kwh or 0.0) + (win_kwh or 0.0)
+    # Consistency check: if total is missing OR less than sum of components, recalculate
+    # This fixes the issue where Façade (Total) might accidentally equal Window if Wall is missing/low.
+    comp_sum = (wall_kwh or 0.0) + (win_kwh or 0.0)
+    if annual_total_kwh is None or (annual_total_kwh < comp_sum * 0.95): # Allow 5% rounding slop
+        annual_total_kwh = comp_sum
 
     # Fallback: If components are missing but total exists, estimate based on area/share
     # This prevents "Wall: n.a." when we have a Total
