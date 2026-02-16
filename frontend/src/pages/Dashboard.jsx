@@ -87,45 +87,50 @@ export default function Dashboard() {
                             rgb_boxed_png_base64: "/gyor_pilot/building_student/overlay.jpg",
                             thermal_boxed_png_base64: "/gyor_pilot/building_student/thermal_v2.jpg"
                         }
+                    }
+                }
+            ]
+        }
+    };
 
     const handleDelete = async (e, building) => {
-                            e.stopPropagation(); // Prevent card click
-                            if (!confirm("Are you sure you want to delete this analysis?")) return;
+        e.stopPropagation(); // Prevent card click
+        if (!confirm("Are you sure you want to delete this analysis?")) return;
 
-                            try {
-                                const backendUrl = "https://thermal-ai.onrender.com";
-                                const resp = await fetch(`${backendUrl}/v1/dashboard/delete`, {
-                                    method: "POST",
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                        // Mock Auth
-                                        "x-user-email": user?.email
-                                    },
-                                    body: JSON.stringify({
-                                        user_email: user?.email,
-                                        building_id: building.id
-                                    })
-                                });
+        try {
+            const backendUrl = "https://thermal-ai.onrender.com";
+            const resp = await fetch(`${backendUrl}/v1/dashboard/delete`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    // Mock Auth
+                    "x-user-email": user?.email
+                },
+                body: JSON.stringify({
+                    user_email: user?.email,
+                    building_id: building.id
+                })
+            });
 
-                                if (resp.ok) {
-                                    // Remove from local state
-                                    setUserBuildings(prev => prev.filter(b => b.id !== building.id));
-                                    if (selectedBuilding?.id === building.id) setSelectedBuilding(null);
-                                } else {
-                                    alert("Cannot delete this building (it might be a system demo building).");
-                                }
-                            } catch (err) {
-                                console.error(err);
-                                alert("Failed to delete.");
-                            }
-                        };
+            if (resp.ok) {
+                // Remove from local state
+                setUserBuildings(prev => prev.filter(b => b.id !== building.id));
+                if (selectedBuilding?.id === building.id) setSelectedBuilding(null);
+            } else {
+                alert("Cannot delete this building (it might be a system demo building).");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to delete.");
+        }
+    };
 
 
-                        const activeConfig = cityConfigs[selectedCity] || cityConfigs.gyor;
-                        const [userBuildings, setUserBuildings] = useState([]);
+    const activeConfig = cityConfigs[selectedCity] || cityConfigs.gyor;
+    const [userBuildings, setUserBuildings] = useState([]);
 
-                        // Fetch User Buildings
-                        useEffect(() => {
+    // Fetch User Buildings
+    useEffect(() => {
         if (user?.email) {
             const backendUrl = "https://thermal-ai.onrender.com";
             fetch(`${backendUrl}/v1/dashboard`, {
