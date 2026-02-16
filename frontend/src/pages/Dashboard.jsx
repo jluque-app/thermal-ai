@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, MessageSquareText, Download, Building, Search, Map as MapIcon, Power, ArrowRight, TrendingUp, Zap, CloudFog, Coins } from 'lucide-react';
+import { Plus, MessageSquareText, Download, Building, Search, Map as MapIcon, Power, ArrowRight, TrendingUp, Zap, CloudFog, Coins, Trash2 } from 'lucide-react';
 import L from 'leaflet';
 
 // Fix Leaflet marker icons in React
@@ -87,17 +87,45 @@ export default function Dashboard() {
                             rgb_boxed_png_base64: "/gyor_pilot/building_student/overlay.jpg",
                             thermal_boxed_png_base64: "/gyor_pilot/building_student/thermal_v2.jpg"
                         }
-                    }
-                }
-            ]
-        }
-    };
 
-    const activeConfig = cityConfigs[selectedCity] || cityConfigs.gyor;
-    const [userBuildings, setUserBuildings] = useState([]);
+    const handleDelete = async (e, building) => {
+                            e.stopPropagation(); // Prevent card click
+                            if (!confirm("Are you sure you want to delete this analysis?")) return;
 
-    // Fetch User Buildings
-    useEffect(() => {
+                            try {
+                                const backendUrl = "https://thermal-ai.onrender.com";
+                                const resp = await fetch(`${backendUrl}/v1/dashboard/delete`, {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        // Mock Auth
+                                        "x-user-email": user?.email
+                                    },
+                                    body: JSON.stringify({
+                                        user_email: user?.email,
+                                        building_id: building.id
+                                    })
+                                });
+
+                                if (resp.ok) {
+                                    // Remove from local state
+                                    setUserBuildings(prev => prev.filter(b => b.id !== building.id));
+                                    if (selectedBuilding?.id === building.id) setSelectedBuilding(null);
+                                } else {
+                                    alert("Cannot delete this building (it might be a system demo building).");
+                                }
+                            } catch (err) {
+                                console.error(err);
+                                alert("Failed to delete.");
+                            }
+                        };
+
+
+                        const activeConfig = cityConfigs[selectedCity] || cityConfigs.gyor;
+                        const [userBuildings, setUserBuildings] = useState([]);
+
+                        // Fetch User Buildings
+                        useEffect(() => {
         if (user?.email) {
             const backendUrl = "https://thermal-ai.onrender.com";
             fetch(`${backendUrl}/v1/dashboard`, {
@@ -166,7 +194,7 @@ export default function Dashboard() {
                             <Card
                                 key={b.id}
                                 onClick={() => setSelectedBuilding(b)}
-                                className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${selectedBuilding?.id === b.id ? 'ring-2 ring-emerald-500' : ''} ${b.rating === 'good' ? 'border-l-emerald-500' : b.rating === 'medium' ? 'border-l-amber-500' : 'border-l-red-500'}`}
+                                className={`cursor-pointer transition-all hover:shadow-md border-l-4 relative ${selectedBuilding?.id === b.id ? 'ring-2 ring-emerald-500' : ''} ${b.rating === 'good' ? 'border-l-emerald-500' : b.rating === 'medium' ? 'border-l-amber-500' : 'border-l-red-500'}`}
                             >
                                 <CardContent className="p-4">
                                     <div className="flex justify-between items-start mb-1">
@@ -179,6 +207,16 @@ export default function Dashboard() {
                                     <div className="flex items-center gap-1 text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded inline-block">
                                         <Power className="w-3 h-3" /> Potential Savings: <strong>{b.savings || 'Pending'}</strong>
                                     </div>
+                                    {/* Show delete only if it's not a hardcoded system demo (simple check: if it's in userBuildings) */}
+                                    {userBuildings.some(ub => ub.id === b.id) && (
+                                        <button
+                                            onClick={(e) => handleDelete(e, b)}
+                                            className="absolute top-2 right-2 p-1 text-slate-400 hover:text-red-500 hover:bg-slate-100 rounded-full transition-colors"
+                                            title="Delete Analysis"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    )}
                                 </CardContent>
                             </Card>
                         ))}

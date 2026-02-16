@@ -2075,3 +2075,23 @@ async def add_to_dashboard(req: AddBuildingRequest):
 
     dashboard_store.add_building(req.user_email, b)
     return {"status": "ok", "building": b}
+
+class DeleteBuildingRequest(BaseModel):
+    user_email: EmailStr
+    building_id: str
+
+@app.post("/v1/dashboard/delete")
+async def delete_from_dashboard(req: DeleteBuildingRequest):
+    # Implement delete logic in store
+    with dashboard_store.lock:
+        if req.user_email in dashboard_store.data:
+            initial_len = len(dashboard_store.data[req.user_email])
+            dashboard_store.data[req.user_email] = [
+                b for b in dashboard_store.data[req.user_email] 
+                if b.get("id") != req.building_id
+            ]
+            if len(dashboard_store.data[req.user_email]) < initial_len:
+                dashboard_store._save()
+                return {"status": "ok", "deleted_id": req.building_id}
+    
+    raise HTTPException(status_code=404, detail="Building not found or not authorized.")
