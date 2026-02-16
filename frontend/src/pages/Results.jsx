@@ -126,7 +126,23 @@ export default function Results() {
         throw new Error(err.error || "API Export Failed");
       }
 
+      // Check if backend returned JSON error with 200 OK (unlikely but possible)
+      const contentType = resp.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const err = await resp.json();
+        throw new Error(err.error || "API returned JSON instead of file (200 OK)");
+      }
+
       const blob = await resp.blob();
+
+      if (blob.size < 100) {
+        // Suspiciously small file, probably an error text
+        const text = await blob.text();
+        if (text.includes("error") || text.includes("Error")) {
+          throw new Error("Server returned error text: " + text.slice(0, 100));
+        }
+      }
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
