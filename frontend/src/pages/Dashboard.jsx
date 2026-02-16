@@ -40,6 +40,13 @@ function ChangeView({ center, zoom }) {
     return null;
 }
 
+// Helper for image src (Consolidated from Results.jsx)
+function b64img(b64) {
+    if (!b64) return null;
+    if (b64.startsWith('/') || b64.startsWith('http')) return b64;
+    return b64.startsWith("data:image") ? b64 : `data:image/png;base64,${b64}`;
+}
+
 export default function Dashboard() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -301,16 +308,16 @@ export default function Dashboard() {
                                             <div className="space-y-1">
                                                 <p className="text-xs font-semibold text-slate-500 uppercase">Original RGB</p>
                                                 <div className="aspect-[4/3] bg-slate-200 rounded-lg overflow-hidden border border-slate-300">
-                                                    <img src={data.images?.rgb_png_base64 || data.images?.rgb} className="w-full h-full object-cover" alt="RGB" />
+                                                    <img src={b64img(data.images?.rgb_png_base64 || data.images?.rgb)} className="w-full h-full object-cover" alt="RGB" />
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
                                                 <p className="text-xs font-semibold text-slate-500 uppercase">Thermal with AI Boxes</p>
                                                 <div className="aspect-[4/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-300 relative group">
                                                     {/* Toggle between thermal and overlay on hover/click could be cool, for now show Overlay if available */}
-                                                    <img src={data.images?.thermal_boxed_png_base64 || data.images?.overlay_png_base64 || data.images?.overlay} className="w-full h-full object-contain" alt="Thermal Boxed" />
+                                                    <img src={b64img(data.images?.thermal_boxed_png_base64 || data.images?.overlay_png_base64 || data.images?.overlay)} className="w-full h-full object-contain" alt="Thermal Boxed" />
                                                     {/* Hover to compare */}
-                                                    <img src={data.images?.thermal_png_base64 || data.images?.thermal} className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300" alt="Raw Thermal" />
+                                                    <img src={b64img(data.images?.thermal_png_base64 || data.images?.thermal)} className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300" alt="Raw Thermal" />
                                                     <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
                                                         Hovering Raw Thermal
                                                     </div>
