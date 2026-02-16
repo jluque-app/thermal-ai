@@ -321,32 +321,9 @@ export default function Dashboard() {
                                         <div className="mt-6 flex justify-end gap-2">
                                             <Button variant="outline" onClick={() => setShowResultModal(false)}>Close</Button>
                                             <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
-                                                const h = data.headline || {};
-                                                const parseVal = (v) => {
-                                                    if (typeof v === 'number') return v;
-                                                    if (!v) return 0;
-                                                    return parseInt(String(v).replace(/,/g, '').replace(/[^\d]/g, ''), 10);
-                                                };
-
-                                                const payload = {
-                                                    report: {
-                                                        meta: {
-                                                            city: isGyor ? "Győr, Hungary" : "Berlin, Germany",
-                                                            address: selectedBuilding.addr
-                                                        },
-                                                        headline: {
-                                                            estimated_annual_heat_loss_kwh: parseVal(h.estimated_annual_heat_loss_kwh),
-                                                            estimated_annual_cost_eur: parseVal(h.estimated_annual_cost_eur),
-                                                            estimated_co2_emissions_kg: parseVal(h.estimated_co2_emissions_kg),
-                                                            present_value_eur: h.present_value_eur ? parseVal(h.present_value_eur) : (parseVal(h.estimated_annual_cost_eur) * 15),
-                                                            key_driver: h.key_driver || "Uninsulated Facade"
-                                                        },
-                                                        financials: data.financials,
-                                                        breakdown: data.breakdown,
-                                                        images: data.images // Struct matches Results.jsx expectation
-                                                    }
-                                                };
-                                                navigate('/Results', { state: { result: payload } });
+                                                // Fix: Pass the FULL stored payload to Results.jsx so PDF/Export works correctly
+                                                // The stored object should contain 'raw', 'meta', 'report', etc.
+                                                navigate('/Results', { state: { result: rawData } });
                                             }}>
                                                 Full Report & Export
                                             </Button>
