@@ -47,7 +47,7 @@ export default function NewAnalysis() {
 
   useEffect(() => {
     if (!isLoadingAuth && !isAuthenticated) {
-      navigate('/login');
+      navigate('/', { state: { openLogin: true } });
     }
   }, [isLoadingAuth, isAuthenticated, navigate]);
 
