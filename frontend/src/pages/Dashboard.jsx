@@ -58,348 +58,320 @@ export default function Dashboard() {
             zoom: 13,
             buildings: [
 
-                {
-                    id: 'gyor_student', lat: 47.694444, lng: 17.625278, status: 'Completed', rating: 'poor', addr: 'Egyetem ter 1, 9026 Gyor', type: 'K0 Student Hostel', type: 'Student Hostel', sqft: '1,680 m²', loss: 'Critical', savings: '€12,600/yr',
-                    reportData: {
-                        headline: {
-                            estimated_annual_heat_loss_kwh: "105,000",
-                            estimated_annual_cost_eur: "12,600",
-                            estimated_co2_emissions_kg: "21,000",
-                            present_value_eur: "189,000",
-                            key_driver: "Uninsulated Panel Wall"
-                        },
-                        financials: {
-                            savings_1y: "12,600",
-                            savings_5y: "63,000",
-                            savings_15y: "189,000",
-                            cost_1y: "12,600",
-                            cost_5y: "63,000",
-                            cost_15y: "189,000"
-                        },
-                        breakdown: {
-                            windows_kwh: "35,000",
-                            walls_kwh: "70,000"
-                        },
-                        images: {
-                            rgb_png_base64: "/gyor_pilot/building_student/rgb_v2.jpg",
-                            thermal_png_base64: "/gyor_pilot/building_student/thermal_v2.jpg",
-                            overlay_png_base64: "/gyor_pilot/building_student/overlay.jpg",
-                            rgb_boxed_png_base64: "/gyor_pilot/building_student/overlay.jpg",
-                            thermal_boxed_png_base64: "/gyor_pilot/building_student/thermal_v2.jpg"
-                        }
-                    }
-                }
+                // Pilot buildings removed as per request
             ]
-        }
+
+            ]
+}
     };
 
-    const handleDelete = async (e, building) => {
-        e.stopPropagation(); // Prevent card click
-        if (!confirm("Are you sure you want to delete this analysis?")) return;
+const handleDelete = async (e, building) => {
+    e.stopPropagation(); // Prevent card click
+    if (!confirm("Are you sure you want to delete this analysis?")) return;
 
-        try {
-            const backendUrl = "https://thermal-ai.onrender.com";
-            const resp = await fetch(`${backendUrl}/v1/dashboard/delete`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    // Mock Auth
-                    "x-user-email": user?.email
-                },
-                body: JSON.stringify({
-                    user_email: user?.email,
-                    building_id: building.id
-                })
-            });
-
-            if (resp.ok) {
-                // Remove from local state
-                setUserBuildings(prev => prev.filter(b => b.id !== building.id));
-                if (selectedBuilding?.id === building.id) setSelectedBuilding(null);
-            } else {
-                alert("Cannot delete this building (it might be a system demo building).");
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Failed to delete.");
-        }
-    };
-
-
-    const activeConfig = cityConfigs[selectedCity] || cityConfigs.gyor;
-    const [userBuildings, setUserBuildings] = useState([]);
-
-    // Fetch User Buildings
-    useEffect(() => {
-        if (user?.email) {
-            const backendUrl = "https://thermal-ai.onrender.com";
-            fetch(`${backendUrl}/v1/dashboard`, {
-                headers: { "x-user-email": user.email }
+    try {
+        const backendUrl = "https://thermal-ai.onrender.com";
+        const resp = await fetch(`${backendUrl}/v1/dashboard/delete`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                // Mock Auth
+                "x-user-email": user?.email
+            },
+            body: JSON.stringify({
+                user_email: user?.email,
+                building_id: building.id
             })
-                .then(res => res.json())
-                .then(data => {
-                    if (Array.isArray(data)) setUserBuildings(data);
-                })
-                .catch(err => console.error("Failed to load dashboard:", err));
+        });
+
+        if (resp.ok) {
+            // Remove from local state
+            setUserBuildings(prev => prev.filter(b => b.id !== building.id));
+            if (selectedBuilding?.id === building.id) setSelectedBuilding(null);
+        } else {
+            alert("Cannot delete this building (it might be a system demo building).");
         }
-    }, [user]);
+    } catch (err) {
+        console.error(err);
+        alert("Failed to delete.");
+    }
+};
 
-    const DEMO_BUILDINGS = [...activeConfig.buildings, ...userBuildings];
 
-    // Protect Route
-    useEffect(() => {
-        if (!isLoadingAuth && !isAuthenticated) {
-            navigate('/');
-        }
-    }, [isLoadingAuth, isAuthenticated, navigate]);
+const activeConfig = cityConfigs[selectedCity] || cityConfigs.gyor;
+const [userBuildings, setUserBuildings] = useState([]);
 
-    if (isLoadingAuth) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+// Fetch User Buildings
+useEffect(() => {
+    if (user?.email) {
+        const backendUrl = "https://thermal-ai.onrender.com";
+        fetch(`${backendUrl}/v1/dashboard`, {
+            headers: { "x-user-email": user.email }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setUserBuildings(data);
+            })
+            .catch(err => console.error("Failed to load dashboard:", err));
+    }
+}, [user]);
 
-    return (
-        <div className="flex flex-col h-screen bg-slate-50">
+const DEMO_BUILDINGS = [...activeConfig.buildings, ...userBuildings];
 
-            {/* Top Bar */}
-            <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10">
-                <div>
-                    <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                        <Building className="w-6 h-6 text-emerald-600" />
-                        Property Portfolio
-                    </h1>
-                    <p className="text-sm text-slate-500">Welcome, {user?.email || 'User'}</p>
-                </div>
-                <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => navigate('/ExpertChat')} className="gap-2">
-                        <MessageSquareText className="w-4 h-4" /> Expert AI
-                    </Button>
-                    <Button onClick={() => navigate('/NewAnalysis')} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
-                        <Plus className="w-4 h-4" /> New Analysis
-                    </Button>
-                </div>
+// Protect Route
+useEffect(() => {
+    if (!isLoadingAuth && !isAuthenticated) {
+        navigate('/');
+    }
+}, [isLoadingAuth, isAuthenticated, navigate]);
+
+if (isLoadingAuth) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+
+return (
+    <div className="flex flex-col h-screen bg-slate-50">
+
+        {/* Top Bar */}
+        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10">
+            <div>
+                <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <Building className="w-6 h-6 text-emerald-600" />
+                    Property Portfolio
+                </h1>
+                <p className="text-sm text-slate-500">Welcome, {user?.email || 'User'}</p>
             </div>
-
-            <div className="flex flex-1 overflow-hidden">
-
-                {/* Sidebar List */}
-                <div className="w-96 bg-white border-r border-slate-200 flex flex-col z-0 shadow-xl overflow-hidden">
-                    <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                        <h2 className="font-semibold text-slate-700 flex items-center gap-2">
-                            <MapIcon className="w-4 h-4" /> Analyzed Buildings
-                        </h2>
-                        <div className="mt-2 relative">
-                            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                            <input
-                                className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                placeholder="Search address..."
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                        {DEMO_BUILDINGS.map(b => (
-                            <Card
-                                key={b.id}
-                                onClick={() => setSelectedBuilding(b)}
-                                className={`cursor-pointer transition-all hover:shadow-md border-l-4 relative ${selectedBuilding?.id === b.id ? 'ring-2 ring-emerald-500' : ''} ${b.rating === 'good' ? 'border-l-emerald-500' : b.rating === 'medium' ? 'border-l-amber-500' : 'border-l-red-500'}`}
-                            >
-                                <CardContent className="p-4">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <h3 className="font-bold text-slate-800">{b.addr}</h3>
-                                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${b.rating === 'good' ? 'bg-emerald-100 text-emerald-800' : b.rating === 'medium' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>
-                                            {b.loss || 'N/A'} Loss
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-slate-500 mb-2">{b.type}</p>
-                                    <div className="flex items-center gap-1 text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded inline-block">
-                                        <Power className="w-3 h-3" /> Potential Savings: <strong>{b.savings || 'Pending'}</strong>
-                                    </div>
-                                    {/* Show delete only if it's not a hardcoded system demo (simple check: if it's in userBuildings) */}
-                                    {userBuildings.some(ub => ub.id === b.id) && (
-                                        <button
-                                            onClick={(e) => handleDelete(e, b)}
-                                            className="absolute top-2 right-2 p-1 text-slate-400 hover:text-red-500 hover:bg-slate-100 rounded-full transition-colors"
-                                            title="Delete Analysis"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        ))}
-
-                        <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-lg bg-slate-50">
-                            <p className="text-sm text-slate-500 mb-3">Want to analyze another building?</p>
-                            <Button variant="outline" size="sm" onClick={() => navigate('/NewAnalysis')}>
-                                Add Property
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Map Area */}
-                <div className="flex-1 relative bg-slate-100">
-                    {/* Map Interface - key forces re-render on city change */}
-                    <MapContainer key={selectedCity} center={activeConfig.center} zoom={activeConfig.zoom} style={{ height: '100%', width: '100%' }}>
-                        <TileLayer
-                            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                        />
-                        <ChangeView center={selectedBuilding ? [selectedBuilding.lat, selectedBuilding.lng] : activeConfig.center} zoom={activeConfig.zoom} />
-
-                        {DEMO_BUILDINGS.map(b => (
-                            <Marker
-                                key={b.id}
-                                position={[b.lat, b.lng]}
-                                icon={icons[b.rating || 'medium']}
-                                eventHandlers={{
-                                    click: () => setSelectedBuilding(b),
-                                }}
-                            >
-                                <Popup>
-                                    <div className="p-1">
-                                        <h3 className="font-bold text-md mb-1">{b.addr}</h3>
-                                        <p className="text-sm text-slate-600 mb-2">{b.type}</p>
-                                        <div className="flex gap-2">
-                                            <Button size="sm" className="h-7 text-xs bg-emerald-600" onClick={() => {
-                                                if (b.reportData) {
-                                                    setShowResultModal(true);
-                                                } else {
-                                                    navigate('/Results'); // Fallback or dedicated page
-                                                }
-                                            }}>
-                                                View Report
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </Popup>
-                            </Marker>
-                        ))}
-                    </MapContainer>
-
-                    {/* MINI-RESULTS POPUP (Modal) */}
-                    <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
-                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-50">
-                            {selectedBuilding && selectedBuilding.reportData ? (() => {
-                                const data = selectedBuilding.reportData;
-                                const isGyor = selectedCity === 'gyor';
-
-                                return (
-                                    <>
-                                        <DialogHeader>
-                                            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                                                <TrendingUp className="w-6 h-6 text-emerald-600" /> Analysis Report: {selectedBuilding.type}
-                                            </DialogTitle>
-                                            <DialogDescription>
-                                                Full thermal analysis results for {selectedBuilding.addr}
-                                            </DialogDescription>
-                                        </DialogHeader>
-
-                                        <div className="grid md:grid-cols-4 gap-4 mt-4">
-                                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Annual Loss</p>
-                                                <span className="text-xl font-bold text-slate-900">{data.headline?.estimated_annual_heat_loss_kwh || data.headline?.loss || data.loss}</span> <span className="text-xs text-slate-500">kWh</span>
-                                                <Zap className="w-6 h-6 text-emerald-100 absolute right-2 top-2" />
-                                            </div>
-                                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Cost</p>
-                                                <span className="text-xl font-bold text-slate-900">€{data.headline?.estimated_annual_cost_eur || data.headline?.cost || data.cost}</span> <span className="text-xs text-slate-500">/yr</span>
-                                                <Coins className="w-6 h-6 text-amber-100 absolute right-2 top-2" />
-                                            </div>
-                                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Emissions</p>
-                                                <span className="text-xl font-bold text-slate-900">{data.headline?.estimated_co2_emissions_kg || data.headline?.co2 || data.co2}</span> <span className="text-xs text-slate-500">kg</span>
-                                                <CloudFog className="w-6 h-6 text-blue-100 absolute right-2 top-2" />
-                                            </div>
-                                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Target</p>
-                                                <span className="text-sm font-bold text-emerald-600">{data.headline?.key_driver || data.headline?.target || data.target}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid md:grid-cols-2 gap-4 mt-4">
-                                            <div className="space-y-1">
-                                                <p className="text-xs font-semibold text-slate-500 uppercase">Original RGB</p>
-                                                <div className="aspect-[4/3] bg-slate-200 rounded-lg overflow-hidden border border-slate-300">
-                                                    <img src={data.images?.rgb_png_base64 || data.images?.rgb} className="w-full h-full object-cover" alt="RGB" />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <p className="text-xs font-semibold text-slate-500 uppercase">Thermal with AI Boxes</p>
-                                                <div className="aspect-[4/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-300 relative group">
-                                                    {/* Toggle between thermal and overlay on hover/click could be cool, for now show Overlay if available */}
-                                                    <img src={data.images?.thermal_boxed_png_base64 || data.images?.overlay_png_base64 || data.images?.overlay} className="w-full h-full object-contain" alt="Thermal Boxed" />
-                                                    {/* Hover to compare */}
-                                                    <img src={data.images?.thermal_png_base64 || data.images?.thermal} className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300" alt="Raw Thermal" />
-                                                    <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        Hovering Raw Thermal
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-6 flex justify-end gap-2">
-                                            <Button variant="outline" onClick={() => setShowResultModal(false)}>Close</Button>
-                                            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
-                                                const h = data.headline || {};
-                                                const parseVal = (v) => {
-                                                    if (typeof v === 'number') return v;
-                                                    if (!v) return 0;
-                                                    return parseInt(String(v).replace(/,/g, '').replace(/[^\d]/g, ''), 10);
-                                                };
-
-                                                const payload = {
-                                                    report: {
-                                                        meta: {
-                                                            city: isGyor ? "Győr, Hungary" : "Berlin, Germany",
-                                                            address: selectedBuilding.addr
-                                                        },
-                                                        headline: {
-                                                            estimated_annual_heat_loss_kwh: parseVal(h.estimated_annual_heat_loss_kwh),
-                                                            estimated_annual_cost_eur: parseVal(h.estimated_annual_cost_eur),
-                                                            estimated_co2_emissions_kg: parseVal(h.estimated_co2_emissions_kg),
-                                                            present_value_eur: h.present_value_eur ? parseVal(h.present_value_eur) : (parseVal(h.estimated_annual_cost_eur) * 15),
-                                                            key_driver: h.key_driver || "Uninsulated Facade"
-                                                        },
-                                                        financials: data.financials,
-                                                        breakdown: data.breakdown,
-                                                        images: data.images // Struct matches Results.jsx expectation
-                                                    }
-                                                };
-                                                navigate('/Results', { state: { result: payload } });
-                                            }}>
-                                                Full Report & Export
-                                            </Button>
-                                        </div>
-                                    </>
-                                );
-                            })() : (
-                                <div className="p-8 text-center text-slate-500">
-                                    No detailed report data available for this building.
-                                </div>
-                            )}
-                        </DialogContent>
-                    </Dialog>
-
-                    {/* Floating Legend */}
-                    <div className="absolute bottom-6 right-6 bg-white p-4 rounded-lg shadow-lg z-[1000] border border-slate-200">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Heat Loss Intensity</h4>
-                        <div className="space-y-2 text-sm">
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-emerald-500 border border-white shadow-sm"></div>
-                                <span>Low Loss (Efficient)</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-amber-500 border border-white shadow-sm"></div>
-                                <span>Moderate Loss</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-red-500 border border-white shadow-sm"></div>
-                                <span>Critical Loss (Retrofit Priority)</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+            <div className="flex gap-3">
+                <Button variant="outline" onClick={() => navigate('/ExpertChat')} className="gap-2">
+                    <MessageSquareText className="w-4 h-4" /> Expert AI
+                </Button>
+                <Button onClick={() => navigate('/NewAnalysis')} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
+                    <Plus className="w-4 h-4" /> New Analysis
+                </Button>
             </div>
         </div>
-    );
+
+        <div className="flex flex-1 overflow-hidden">
+
+            {/* Sidebar List */}
+            <div className="w-96 bg-white border-r border-slate-200 flex flex-col z-0 shadow-xl overflow-hidden">
+                <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+                    <h2 className="font-semibold text-slate-700 flex items-center gap-2">
+                        <MapIcon className="w-4 h-4" /> Analyzed Buildings
+                    </h2>
+                    <div className="mt-2 relative">
+                        <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                        <input
+                            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            placeholder="Search address..."
+                        />
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {DEMO_BUILDINGS.map(b => (
+                        <Card
+                            key={b.id}
+                            onClick={() => setSelectedBuilding(b)}
+                            className={`cursor-pointer transition-all hover:shadow-md border-l-4 relative ${selectedBuilding?.id === b.id ? 'ring-2 ring-emerald-500' : ''} ${b.rating === 'good' ? 'border-l-emerald-500' : b.rating === 'medium' ? 'border-l-amber-500' : 'border-l-red-500'}`}
+                        >
+                            <CardContent className="p-4">
+                                <div className="flex justify-between items-start mb-1">
+                                    <h3 className="font-bold text-slate-800">{b.addr}</h3>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${b.rating === 'good' ? 'bg-emerald-100 text-emerald-800' : b.rating === 'medium' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>
+                                        {b.loss || 'N/A'} Loss
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-500 mb-2">{b.type}</p>
+                                <div className="flex items-center gap-1 text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded inline-block">
+                                    <Power className="w-3 h-3" /> Potential Savings: <strong>{b.savings || 'Pending'}</strong>
+                                </div>
+                                {/* Show delete only if it's not a hardcoded system demo (simple check: if it's in userBuildings) */}
+                                {userBuildings.some(ub => ub.id === b.id) && (
+                                    <button
+                                        onClick={(e) => handleDelete(e, b)}
+                                        className="absolute top-2 right-2 p-1 text-slate-400 hover:text-red-500 hover:bg-slate-100 rounded-full transition-colors"
+                                        title="Delete Analysis"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </CardContent>
+                        </Card>
+                    ))}
+
+                    <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-lg bg-slate-50">
+                        <p className="text-sm text-slate-500 mb-3">Want to analyze another building?</p>
+                        <Button variant="outline" size="sm" onClick={() => navigate('/NewAnalysis')}>
+                            Add Property
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Map Area */}
+            <div className="flex-1 relative bg-slate-100">
+                {/* Map Interface - key forces re-render on city change */}
+                <MapContainer key={selectedCity} center={activeConfig.center} zoom={activeConfig.zoom} style={{ height: '100%', width: '100%' }}>
+                    <TileLayer
+                        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    />
+                    <ChangeView center={selectedBuilding ? [selectedBuilding.lat, selectedBuilding.lng] : activeConfig.center} zoom={activeConfig.zoom} />
+
+                    {DEMO_BUILDINGS.map(b => (
+                        <Marker
+                            key={b.id}
+                            position={[b.lat, b.lng]}
+                            icon={icons[b.rating || 'medium']}
+                            eventHandlers={{
+                                click: () => setSelectedBuilding(b),
+                            }}
+                        >
+                            <Popup>
+                                <div className="p-1">
+                                    <h3 className="font-bold text-md mb-1">{b.addr}</h3>
+                                    <p className="text-sm text-slate-600 mb-2">{b.type}</p>
+                                    <div className="flex gap-2">
+                                        <Button size="sm" className="h-7 text-xs bg-emerald-600" onClick={() => {
+                                            if (b.reportData) {
+                                                setShowResultModal(true);
+                                            } else {
+                                                navigate('/Results'); // Fallback or dedicated page
+                                            }
+                                        }}>
+                                            View Report
+                                        </Button>
+                                    </div>
+                                </div>
+                            </Popup>
+                        </Marker>
+                    ))}
+                </MapContainer>
+
+                {/* MINI-RESULTS POPUP (Modal) */}
+                <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-50">
+                        {selectedBuilding && selectedBuilding.reportData ? (() => {
+                            const data = selectedBuilding.reportData;
+                            const isGyor = selectedCity === 'gyor';
+
+                            return (
+                                <>
+                                    <DialogHeader>
+                                        <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                                            <TrendingUp className="w-6 h-6 text-emerald-600" /> Analysis Report: {selectedBuilding.type}
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                            Full thermal analysis results for {selectedBuilding.addr}
+                                        </DialogDescription>
+                                    </DialogHeader>
+
+                                    <div className="grid md:grid-cols-4 gap-4 mt-4">
+                                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Annual Loss</p>
+                                            <span className="text-xl font-bold text-slate-900">{data.headline?.estimated_annual_heat_loss_kwh || data.headline?.loss || data.loss}</span> <span className="text-xs text-slate-500">kWh</span>
+                                            <Zap className="w-6 h-6 text-emerald-100 absolute right-2 top-2" />
+                                        </div>
+                                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Cost</p>
+                                            <span className="text-xl font-bold text-slate-900">€{data.headline?.estimated_annual_cost_eur || data.headline?.cost || data.cost}</span> <span className="text-xs text-slate-500">/yr</span>
+                                            <Coins className="w-6 h-6 text-amber-100 absolute right-2 top-2" />
+                                        </div>
+                                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Emissions</p>
+                                            <span className="text-xl font-bold text-slate-900">{data.headline?.estimated_co2_emissions_kg || data.headline?.co2 || data.co2}</span> <span className="text-xs text-slate-500">kg</span>
+                                            <CloudFog className="w-6 h-6 text-blue-100 absolute right-2 top-2" />
+                                        </div>
+                                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Target</p>
+                                            <span className="text-sm font-bold text-emerald-600">{data.headline?.key_driver || data.headline?.target || data.target}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-4 mt-4">
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-semibold text-slate-500 uppercase">Original RGB</p>
+                                            <div className="aspect-[4/3] bg-slate-200 rounded-lg overflow-hidden border border-slate-300">
+                                                <img src={data.images?.rgb_png_base64 || data.images?.rgb} className="w-full h-full object-cover" alt="RGB" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-semibold text-slate-500 uppercase">Thermal with AI Boxes</p>
+                                            <div className="aspect-[4/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-300 relative group">
+                                                {/* Toggle between thermal and overlay on hover/click could be cool, for now show Overlay if available */}
+                                                <img src={data.images?.thermal_boxed_png_base64 || data.images?.overlay_png_base64 || data.images?.overlay} className="w-full h-full object-contain" alt="Thermal Boxed" />
+                                                {/* Hover to compare */}
+                                                <img src={data.images?.thermal_png_base64 || data.images?.thermal} className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300" alt="Raw Thermal" />
+                                                <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    Hovering Raw Thermal
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 flex justify-end gap-2">
+                                        <Button variant="outline" onClick={() => setShowResultModal(false)}>Close</Button>
+                                        <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
+                                            const h = data.headline || {};
+                                            const parseVal = (v) => {
+                                                if (typeof v === 'number') return v;
+                                                if (!v) return 0;
+                                                return parseInt(String(v).replace(/,/g, '').replace(/[^\d]/g, ''), 10);
+                                            };
+
+                                            const payload = {
+                                                report: {
+                                                    meta: {
+                                                        city: isGyor ? "Győr, Hungary" : "Berlin, Germany",
+                                                        address: selectedBuilding.addr
+                                                    },
+                                                    headline: {
+                                                        estimated_annual_heat_loss_kwh: parseVal(h.estimated_annual_heat_loss_kwh),
+                                                        estimated_annual_cost_eur: parseVal(h.estimated_annual_cost_eur),
+                                                        estimated_co2_emissions_kg: parseVal(h.estimated_co2_emissions_kg),
+                                                        present_value_eur: h.present_value_eur ? parseVal(h.present_value_eur) : (parseVal(h.estimated_annual_cost_eur) * 15),
+                                                        key_driver: h.key_driver || "Uninsulated Facade"
+                                                    },
+                                                    financials: data.financials,
+                                                    breakdown: data.breakdown,
+                                                    images: data.images // Struct matches Results.jsx expectation
+                                                }
+                                            };
+                                            navigate('/Results', { state: { result: payload } });
+                                        }}>
+                                            Full Report & Export
+                                        </Button>
+                                    </div>
+                                </>
+                            );
+                        })() : (
+                            <div className="p-8 text-center text-slate-500">
+                                No detailed report data available for this building.
+                            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Floating Legend */}
+                <div className="absolute bottom-6 right-6 bg-white p-4 rounded-lg shadow-lg z-[1000] border border-slate-200">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Heat Loss Intensity</h4>
+                    <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-emerald-500 border border-white shadow-sm"></div>
+                            <span>Low Loss (Efficient)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-amber-500 border border-white shadow-sm"></div>
+                            <span>Moderate Loss</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-red-500 border border-white shadow-sm"></div>
+                            <span>Critical Loss (Retrofit Priority)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+);
 }

@@ -465,34 +465,45 @@ def _fix_slide8_values(prs: Presentation, token_map: Dict[str, str]) -> None:
                             p.runs[0].font.name = 'Arial' # Standardize if possible
 
 
+
 def _fix_slide9_financials(prs: Presentation, token_map: Dict[str, str]) -> None:
     """
-    Ensure the Financial Impact Table on Slide 9 (Index 8) has the 15-year row.
+    Ensure the Financial Impact Table has the 15-year row.
+    Searches Slides 8, 9, 10 (indicies 7, 8, 9) just in case template shifted.
     """
-    try:
-        slide = prs.slides[8]
-    except IndexError:
-        return
-
-    # Find the table
-    table = None
-    for shape in _iter_shapes(slide):
-        if shape.has_table:
-            # Check headers to confirm it's the right table
-            row0 = shape.table.rows[0]
-            if len(row0.cells) > 0 and "Time" in row0.cells[0].text_frame.text:
-                table = shape.table
-                break
     
-    if not table:
+    target_table = None
+    
+    # Iterate likely slides
+    for slide_idx in [8, 7, 9]:
+        try:
+            slide = prs.slides[slide_idx]
+        except IndexError:
+            continue
+            
+        for shape in _iter_shapes(slide):
+            if shape.has_table:
+                # Check header row for keywords
+                try:
+                    row0_text = " ".join([c.text_frame.text for c in shape.table.rows[0].cells]).lower()
+                    if "time" in row0_text and "savings" in row0_text:
+                        target_table = shape.table
+                        break
+                except Exception:
+                    continue
+        if target_table:
+            break
+    
+    if not target_table:
         return
 
     # Check for "15 Years"
     has_15y = False
-    for row in table.rows:
+    for row in target_table.rows:
         try:
-            txt = row.cells[0].text_frame.text
-            if "15 Years" in txt or "15 Year" in txt:
+            # Check first cell
+            txt = row.cells[0].text_frame.text.lower()
+            if "15 year" in txt:
                 has_15y = True
                 break
         except Exception:
@@ -500,33 +511,29 @@ def _fix_slide9_financials(prs: Presentation, token_map: Dict[str, str]) -> None
 
     if not has_15y:
         # Add row
-        new_row = table.rows.add()
-        new_row.height = table.rows[1].height # Copy height from data row
+        new_row = target_table.rows.add()
+        # Attempt to copy height from last row
+        new_row.height = target_table.rows[-2].height 
         
         # Cell 0: Label
         c0 = new_row.cells[0]
         c0.text_frame.text = "15 Years"
-        # Style? (Optional, might inherit)
-
+        
         # Cell 1: Savings
         c1 = new_row.cells[1]
         val_sav = token_map.get("PV_TOTAL_15Y_EUR", "0")
         c1.text_frame.text = f"€{val_sav}"
+        c1.text_frame.paragraphs[0].font.bold = True
+        # Try to set color to Green (RGB 22, 163, 74 / #16a34a)
+        # Without explicit RGB import, maybe we assume template style or leave as bold.
         
         # Cell 2: Cost
         c2 = new_row.cells[2]
-        val_cost = token_map.get("PV_TOTAL_15Y_EUR", "0") # Wait.. Savings vs Cost?
-        # In the table: "Est. Energy Savings" vs "Est. Cost of Inaction". 
-        # Actually PV of losses is Cost of Inaction. 
-        # Savings usually = Cost of Inaction in this model (Cost Avoided).
-        # We'll use the same value or distinct tokens if available.
+        val_cost = token_map.get("PV_TOTAL_15Y_EUR", "0") 
         c2.text_frame.text = f"€{val_cost}"
-        
-        # Style text (Bold Green / Red)
-        for p in c1.text_frame.paragraphs:
-            if hasattr(p, 'font'): p.font.bold = True
-            # We can't easily set color without complex RGB imports. 
-            # Leaving as plain text is better than missing.
+        c2.text_frame.paragraphs[0].font.bold = True
+        # Red likely needed here.
+
 
 
 # -----------------------------
