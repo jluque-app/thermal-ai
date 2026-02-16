@@ -43,13 +43,13 @@ function extractErrorMessage(payload, fallback = "Something went wrong. Please t
 
 export default function NewAnalysis() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoadingAuth, navigateToLogin } = useAuth();
+  const { user, isAuthenticated, isLoadingAuth } = useAuth();
 
   useEffect(() => {
     if (!isLoadingAuth && !isAuthenticated) {
-      navigateToLogin();
+      navigate('/login');
     }
-  }, [isLoadingAuth, isAuthenticated, navigateToLogin]);
+  }, [isLoadingAuth, isAuthenticated, navigate]);
 
   // Files
   const [rgbImage, setRgbImage] = useState(null);
