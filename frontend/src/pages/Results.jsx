@@ -1,6 +1,7 @@
 // Pages/Results.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/AuthContext";
 
 import { Button } from "@/components/ui/button";
 import { Download, Share2, ArrowLeft, Zap, TrendingUp, AlertTriangle, CloudFog, Coins, FileText, Presentation } from "lucide-react";
@@ -146,6 +147,62 @@ export default function Results() {
     }
   };
 
+  const { user } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleAddToDashboard = async () => {
+    setIsSaving(true);
+    try {
+      // 1. Construct Building Object
+      const b = {
+        id: payload?.meta?.analysis_id || crypto.randomUUID(),
+        lat: parseFloat(payload?.raw?.inputs?.latitude || payload?.raw?.inputs?.gps_lat || meta.latitude || 0),
+        lng: parseFloat(payload?.raw?.inputs?.longitude || payload?.raw?.inputs?.gps_lon || meta.longitude || 0),
+        addr: meta.address || "Unknown Address",
+        type: meta.building_type || "Unknown Type",
+        // Basic rating logic based on letter
+        rating: (payload.report?.headline?.eec_letter || "C") === "A" ? "good" : (payload.report?.headline?.eec_letter === "B" || payload.report?.headline?.eec_letter === "C") ? "medium" : "poor",
+        loss: payload.report?.headline?.eec_letter || "N/A",
+        savings: `€${formatNumber(payload.report?.financials?.savings_1y, 0)}/yr`,
+        sqft: `${formatNumber(meta.floor_area_m2, 0)} m²`,
+        google_maps_link: meta.google_maps_link || payload.raw?.inputs?.google_maps_link,
+        reportData: payload
+      };
+
+      // 2. Validate
+      const hasLoc = (b.lat && b.lng) || b.google_maps_link || (b.addr && b.addr.length > 5);
+      if (!hasLoc) {
+        alert("Cannot add to Dashboard: Missing Location Data (Lat/Lon, Google Maps Link, or Full Address).");
+        setIsSaving(false);
+        return;
+      }
+
+      // 3. Send to Backend
+      const backendUrl = "https://thermal-ai.onrender.com"; // Consider making this dynamic
+      const resp = await fetch(`${backendUrl}/v1/dashboard/add`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Mock Auth Header for now until full auth
+          "x-user-email": user?.email || "guest"
+        },
+        body: JSON.stringify({
+          user_email: user?.email,
+          building: b
+        })
+      });
+
+      if (!resp.ok) throw new Error("Failed to save to dashboard");
+
+      alert("Successfully added to Dashboard!");
+    } catch (e) {
+      console.error(e);
+      alert("Error saving to dashboard: " + e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleExportPDF = () => handleExport('pdf');
   const handleExportPPT = () => handleExport('pptx');
 
@@ -180,6 +237,16 @@ export default function Results() {
             </div>
           </div>
           <div className="flex gap-3">
+            {user && (
+              <Button
+                variant="outline"
+                onClick={handleAddToDashboard}
+                disabled={isSaving}
+                className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+              >
+                {isSaving ? "Saving..." : (user.email === 'jaime@allretech.org' ? "Add to Pilot Map" : "Save to Dashboard")}
+              </Button>
+            )}
             <Button variant="outline" onClick={handleExportPPT} className="border-slate-300 text-slate-700 hover:bg-slate-50">
               <Presentation className="w-4 h-4 mr-2" /> Export PPT
             </Button>

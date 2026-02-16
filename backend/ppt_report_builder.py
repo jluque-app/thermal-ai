@@ -691,7 +691,7 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
     if annual_cost_total is None:
          annual_cost_total = _safe_float(raw_totals.get("annual_cost_delta"))
 
-    pv_years = [1, 5, 10, 20, 30]
+    pv_years = [1, 5, 10, 15, 20, 30]
     pv_total: Dict[int, float] = {}
     pv_wall: Dict[int, float] = {}
     pv_win: Dict[int, float] = {}
@@ -830,6 +830,7 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
     put("PV_TOTAL_Y1_EUR", _fmt(pv_total.get(1), 0))
     put("PV_TOTAL_5Y_EUR", _fmt(pv_total.get(5), 0))
     put("PV_TOTAL_10Y_EUR", _fmt(pv_total.get(10), 0))
+    put("PV_TOTAL_15Y_EUR", _fmt(pv_total.get(15), 0)) # Added 15Y
     put("PV_TOTAL_20Y_EUR", _fmt(pv_total.get(20), 0))
     put("PV_TOTAL_30Y_EUR", _fmt(pv_total.get(30), 0))
 
@@ -837,6 +838,7 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
     put("PV_WALL_Y1_EUR", _fmt(pv_wall.get(1), 0))
     put("PV_WALL_5Y_EUR", _fmt(pv_wall.get(5), 0))
     put("PV_WALL_10Y_EUR", _fmt(pv_wall.get(10), 0))
+    put("PV_WALL_15Y_EUR", _fmt(pv_wall.get(15), 0)) # Added 15Y
     put("PV_WALL_20Y_EUR", _fmt(pv_wall.get(20), 0))
     put("PV_WALL_30Y_EUR", _fmt(pv_wall.get(30), 0))
 
@@ -844,14 +846,24 @@ def _build_token_map(report: Dict[str, Any], raw: Dict[str, Any]) -> Tuple[Dict[
     put("PV_WINDOWS_Y1_EUR", _fmt(pv_win.get(1), 0))
     put("PV_WINDOWS_5Y_EUR", _fmt(pv_win.get(5), 0))
     put("PV_WINDOWS_10Y_EUR", _fmt(pv_win.get(10), 0))
+    put("PV_WINDOWS_15Y_EUR", _fmt(pv_win.get(15), 0)) # Added 15Y
     put("PV_WINDOWS_20Y_EUR", _fmt(pv_win.get(20), 0))
     put("PV_WINDOWS_30Y_EUR", _fmt(pv_win.get(30), 0))
 
     put("PV_WINDOW_1Y_EUR", _fmt(pv_win.get(1), 0))
     put("PV_WINDOW_5Y_EUR", _fmt(pv_win.get(5), 0))
     put("PV_WINDOW_10Y_EUR", _fmt(pv_win.get(10), 0))
+    put("PV_WINDOW_15Y_EUR", _fmt(pv_win.get(15), 0)) # Added 15Y
     put("PV_WINDOW_20Y_EUR", _fmt(pv_win.get(20), 0))
     put("PV_WINDOW_30Y_EUR", _fmt(pv_win.get(30), 0))
+    
+    # Page 8 Robustness: Map alternative keys to correct per-m2 values
+    put("FACADE_HEAT_LOSS_M2", _fmt(facade_kwh_m2, 2))
+    put("FACADE_HEAT_LOSS_M2_YEAR", _fmt(facade_kwh_m2, 2))
+    put("WINDOWS_HEAT_LOSS_M2", _fmt(win_kwh_m2, 2))
+    put("WINDOWS_HEAT_LOSS_M2_YEAR", _fmt(win_kwh_m2, 2))
+    put("WALL_HEAT_LOSS_M2", _fmt(wall_kwh_m2, 2))
+    put("WALL_HEAT_LOSS_M2_YEAR", _fmt(wall_kwh_m2, 2))
 
     building_type = raw_inputs.get("building_type") or meta.get("building_type")
     building_year = raw_inputs.get("building_year") or meta.get("building_year")

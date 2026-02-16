@@ -94,7 +94,24 @@ export default function Dashboard() {
     };
 
     const activeConfig = cityConfigs[selectedCity] || cityConfigs.gyor;
-    const DEMO_BUILDINGS = activeConfig.buildings;
+    const [userBuildings, setUserBuildings] = useState([]);
+
+    // Fetch User Buildings
+    useEffect(() => {
+        if (user?.email) {
+            const backendUrl = "https://thermal-ai.onrender.com";
+            fetch(`${backendUrl}/v1/dashboard`, {
+                headers: { "x-user-email": user.email }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) setUserBuildings(data);
+                })
+                .catch(err => console.error("Failed to load dashboard:", err));
+        }
+    }, [user]);
+
+    const DEMO_BUILDINGS = [...activeConfig.buildings, ...userBuildings];
 
     // Protect Route
     useEffect(() => {
