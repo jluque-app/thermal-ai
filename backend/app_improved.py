@@ -2095,6 +2095,15 @@ async def delete_from_dashboard(req: DeleteBuildingRequest):
     
     raise HTTPException(status_code=404, detail="Building not found or not authorized.")
 
+@app.post("/v1/dashboard/wipe_user")
+async def wipe_user_dashboard(user_email: str = Body(..., embed=True)):
+    with dashboard_store.lock:
+        if user_email in dashboard_store.data:
+            dashboard_store.data[user_email] = []
+            dashboard_store._save()
+            return {"status": "ok", "message": f"Wiped data for {user_email}"}
+    return {"status": "ok", "message": "User not found, nothing to wipe"}
+
 # ============================================================
 # SPA Catch-All (Moved to end to prevent shadowing API routes)
 # ============================================================
