@@ -259,7 +259,9 @@ export default function Dashboard() {
                     <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
                         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-50">
                             {selectedBuilding && selectedBuilding.reportData ? (() => {
-                                const data = selectedBuilding.reportData;
+                                // Handle nesting: payload might be { report: {...} } or just the report object
+                                const rawData = selectedBuilding.reportData;
+                                const data = rawData.report || rawData;
                                 const isGyor = selectedCity === 'gyor';
 
                                 return (
