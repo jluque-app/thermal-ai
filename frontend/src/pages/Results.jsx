@@ -182,7 +182,20 @@ export default function Results() {
         savings: `€${formatNumber(payload.report?.financials?.savings_1y, 0)}/yr`,
         sqft: `${formatNumber(meta.floor_area_m2, 0)} m²`,
         google_maps_link: meta.google_maps_link || payload.raw?.inputs?.google_maps_link,
-        reportData: payload
+        reportData: {
+          ...payload,
+          report: {
+            ...(payload.report || {}),
+            images: {
+              ...(payload.report?.images || {}),
+              // Explicitly inject resolved images to ensure Dashboard finds them
+              rgb_png_base64: rgbB64,
+              rgb_boxed_png_base64: rgbBoxedB64,
+              thermal_png_base64: thermalB64,
+              thermal_boxed_png_base64: thermalBoxedB64
+            }
+          }
+        }
       };
 
       // 2. Validate
