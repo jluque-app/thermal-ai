@@ -114,6 +114,16 @@ export default function Dashboard() {
         }
     }, [user]);
 
+    // Auto-select building from navigation state (e.g. newly added)
+    useEffect(() => {
+        if (location.state?.highlightBuildingId && userBuildings.length > 0) {
+            const found = userBuildings.find(b => b.id === location.state.highlightBuildingId);
+            if (found) {
+                setSelectedBuilding(found);
+            }
+        }
+    }, [userBuildings, location.state]);
+
     const DEMO_BUILDINGS = [...activeConfig.buildings, ...userBuildings];
 
     // Protect Route

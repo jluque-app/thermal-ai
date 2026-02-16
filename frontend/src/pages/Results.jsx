@@ -210,7 +210,14 @@ export default function Results() {
 
       if (!resp.ok) throw new Error("Failed to save to dashboard");
 
-      alert("Successfully added to Dashboard!");
+      // Navigate to Dashboard and highlight the new building
+      navigate('/Dashboard', {
+        state: {
+          highlightBuildingId: b.id,
+          selectedCity: (meta.city || 'gyor').toLowerCase()
+        }
+      });
+
     } catch (e) {
       console.error(e);
       alert("Error saving to dashboard: " + e.message);
