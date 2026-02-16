@@ -490,11 +490,16 @@ def _fix_slide9_financials(prs: Presentation, token_map: Dict[str, str]) -> None
                 # Check header row for keywords
                 try:
                     row0_text = " ".join([c.text_frame.text for c in shape.table.rows[0].cells]).lower()
+                    print(f"DEBUG: Slide {slide_idx} Table Header: {row0_text}") # DEBUG LOG
                     # User provided: "Time Horizon", "Windows' Heat Loss", "Wall' Heat Loss"
+                    # User's text example shows: "Time Horizon Windows’ Heat Loss Wall’ Heat Loss All Façade Parts’ Heat Loss"
+                    # My check: "time" AND "heat loss". This SHOULD match.
                     if "time" in row0_text and "heat loss" in row0_text:
+                        print(f"DEBUG: FOUND TARGET TABLE on Slide {slide_idx}")
                         target_table = shape.table
                         break
-                except Exception:
+                except Exception as e:
+                    print(f"DEBUG: Error reading table header on Slide {slide_idx}: {e}")
                     continue
         if target_table:
             break
