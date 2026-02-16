@@ -2030,21 +2030,36 @@ class DashboardStore:
             json.dump(self.data, f, indent=2)
 
     def get_user_buildings(self, email: str) -> List[Dict]:
+        email = email.lower().strip()
+        # Reload to ensure we see data from other workers/processes (if any)
+        self._load()
         with self.lock:
-            return self.data.get(email, [])
+            data = self.data.get(email, [])
+            print(f"DEBUG: get_user_buildings for '{email}' -> found {len(data)}")
+            return data
 
     def add_building(self, email: str, building: Dict):
+        email = email.lower().strip()
         with self.lock:
+            # Ensure we have latest before appending
+            self._load()
+            
             if email not in self.data:
                 self.data[email] = []
             
-            # Simple dedup by ID or Address? 
-            # Let's generate a unique ID if missing
+            # Simple dedup by ID
             if "id" not in building:
                 building["id"] = str(uuid.uuid4())
             
-            self.data[email].append(building)
-            self._save()
+            # Check if exists
+            exists = any(b.get("id") == building["id"] for b in self.data[email])
+            if not exists:
+                self.data[email].append(building)
+                print(f"DEBUG: Added building {building['id']} for '{email}'")
+                self._save()
+            else:
+                print(f"DEBUG: Building {building['id']} already exists for '{email}'")
+            
             return building
 
 dashboard_store = DashboardStore()
