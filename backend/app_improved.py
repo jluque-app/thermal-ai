@@ -1993,3 +1993,85 @@ async def analyze(
 
     return JSONResponse(content={"report": report, "raw": response})
 
+
+# -----------------------------
+# Dashboard / Persistence
+# -----------------------------
+DATA_DIR = Path("data")
+DATA_DIR.mkdir(exist_ok=True)
+DASHBOARD_FILE = DATA_DIR / "user_dashboards.json"
+
+class DashboardStore:
+    def __init__(self):
+        self.lock = threading.Lock()
+        self._load()
+
+    def _load(self):
+        if DASHBOARD_FILE.exists():
+            try:
+                with open(DASHBOARD_FILE, "r") as f:
+                    self.data = json.load(f)
+            except Exception:
+                print("Warning: Corrupt dashboard file, starting fresh.")
+                self.data = {}
+        else:
+            self.data = {}
+            # Seed Gyor Pilot for Jaime
+            self._seed_pilot()
+            
+    def _seed_pilot(self):
+        # We can seed the initial student hostel for everyone or just Jaime
+        # For now, let's leave it empty and let frontend combine hardcoded + dynamic
+        # Or better: Frontend hardcodes "Public" pilots, Backend stores "User" additions.
+        pass
+
+    def _save(self):
+        with open(DASHBOARD_FILE, "w") as f:
+            json.dump(self.data, f, indent=2)
+
+    def get_user_buildings(self, email: str) -> List[Dict]:
+        with self.lock:
+            return self.data.get(email, [])
+
+    def add_building(self, email: str, building: Dict):
+        with self.lock:
+            if email not in self.data:
+                self.data[email] = []
+            
+            # Simple dedup by ID or Address? 
+            # Let's generate a unique ID if missing
+            if "id" not in building:
+                building["id"] = str(uuid.uuid4())
+            
+            self.data[email].append(building)
+            self._save()
+            return building
+
+dashboard_store = DashboardStore()
+
+@app.get("/v1/dashboard")
+async def get_dashboard(x_user_email: Optional[str] = Header(None)):
+    if not x_user_email:
+        # Return empty or error? For now empty list if no auth
+        return []
+    return dashboard_store.get_user_buildings(x_user_email)
+
+class AddBuildingRequest(BaseModel):
+    user_email: EmailStr
+    building: Dict[str, Any]
+
+@app.post("/v1/dashboard/add")
+async def add_to_dashboard(req: AddBuildingRequest):
+    # Validate location
+    b = req.building
+    has_loc = (
+        (b.get('lat') and b.get('lng')) or 
+        b.get('google_maps_link') or 
+        (b.get('address') and len(b.get('address', '')) > 5)
+    )
+    
+    if not has_loc:
+        raise HTTPException(status_code=400, detail="Cannot add to dashboard: Missing Latitude/Longitude, Google Maps Link, or Full Address.")
+
+    dashboard_store.add_building(req.user_email, b)
+    return {"status": "ok", "building": b}
