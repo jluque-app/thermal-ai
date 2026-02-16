@@ -244,27 +244,9 @@ if frontend_dist.exists():
 if frontend_dist.exists():
     app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="assets")
     
-    # Catch-all for SPA (must be LAST)
-    @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
-        # Allow API calls to pass through (already handled by routers above, but safe check)
-        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi"):
-            raise HTTPException(status_code=404, detail="Not Found")
-            
-        # Check if a static file exists at this path in frontend/dist
-        # e.g. manifest.json, robots.txt, favicon.ico
-        potential_path = frontend_dist / full_path
-        if potential_path.exists() and potential_path.is_file():
-            return FileResponse(potential_path)
+    # Catch-all route moved to end of file to avoid shadowing API routes
+    pass
 
-        # Serve index.html for any other route (SPA Fallback)
-        index_path = frontend_dist / "index.html"
-        return FileResponse(index_path)
-else:
-    print(f"WARNING: Frontend dist not found at {frontend_dist}. API only mode.")
-    @app.get("/")
-    def root() -> Dict[str, Any]:
-        return {"status": "ok", "service": "ThermalAI API (Frontend not attached)"}
 
 
 @app.get("/health")
@@ -2110,3 +2092,27 @@ async def delete_from_dashboard(req: DeleteBuildingRequest):
                 return {"status": "ok", "deleted_id": req.building_id}
     
     raise HTTPException(status_code=404, detail="Building not found or not authorized.")
+
+# ============================================================
+# SPA Catch-All (Moved to end to prevent shadowing API routes)
+# ============================================================
+if frontend_dist.exists():
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Allow API calls to pass through (already handled by routers above, but safe check)
+        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi") or full_path.startswith("v1/"):
+            raise HTTPException(status_code=404, detail="Not Found")
+            
+        # Check if a static file exists at this path in frontend/dist
+        potential_path = frontend_dist / full_path
+        if potential_path.exists() and potential_path.is_file():
+            return FileResponse(potential_path)
+
+        # Serve index.html for any other route (SPA Fallback)
+        index_path = frontend_dist / "index.html"
+        return FileResponse(index_path)
+else:
+    print(f"WARNING: Frontend dist not found at {frontend_dist}. API only mode.")
+    @app.get("/")
+    def root() -> Dict[str, Any]:
+        return {"status": "ok", "service": "ThermalAI API (Frontend not attached)"}
