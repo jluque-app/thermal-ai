@@ -401,198 +401,183 @@ def _enhance_slide8_eec(prs: Presentation, token_map: Dict[str, str]) -> None:
 # -----------------------------
 def _fix_slide8_values(prs: Presentation, token_map: Dict[str, str]) -> None:
     """
-    Regex-replace the kWh/m² values on Slide 8 (Index 7) to ensure they match Page 7.
-    Targets lines like "Windows: (79.38 kWh/m²·year)" and forces correct value.
+    Rebuild the kWh/m² lines on Slide 8 (Index 7) to ensure correct values AND formatting.
+    Target lines: "Windows: (79.38 kWh/m²·year) => D"
+    We rebuild the paragraph to ensure the letter is BOLD.
     """
     try:
         slide = prs.slides[7]
     except IndexError:
         return
 
-    # Get correct values from token map
+    # Get correct values
     facade_val = token_map.get("FACADE_ANNUAL_HEAT_LOSS_KWH_M2", "0.00")
     win_val = token_map.get("WINDOW_ANNUAL_HEAT_LOSS_KWH_M2", "0.00")
     wall_val = token_map.get("WALL_ANNUAL_HEAT_LOSS_KWH_M2", "0.00")
-
-    # Regex to find: "Windows: (123.45" or "Windows: ({{TOKEN}}"
-    # We look for the label, then a colon, then optionally an opening paren.
-    # We replace the number/token with the correct number.
     
-    updates = [
-        (r"(Window|Glazing).*?\((\s*\d+\.?\d*|\s*\{\{.*?\}\})\s*kWh", win_val),
-        (r"(Wall).*?\((\s*\d+\.?\d*|\s*\{\{.*?\}\})\s*kWh", wall_val),
-        # Facade is usually fine but let's enforce it
-        (r"(Façade|Facade).*?\((\s*\d+\.?\d*|\s*\{\{.*?\}\})\s*kWh", facade_val),
-    ]
+    facade_letter = token_map.get("EEC_LETTER_FACADE", "?")
+    win_letter = token_map.get("EEC_LETTER_WINDOWS", "?")
+    wall_letter = token_map.get("EEC_LETTER_WALL", "?")
+
+    # Map label keywords to (Value, Letter)
+    targets = {
+        "window": (win_val, win_letter),
+        "glazing": (win_val, win_letter),
+        "wall": (wall_val, wall_letter),
+        "façade": (facade_val, facade_letter),
+        "facade": (facade_val, facade_letter),
+    }
 
     for shape in _iter_shapes(slide):
         if not getattr(shape, "has_text_frame", False):
             continue
         
         for p in shape.text_frame.paragraphs:
-            txt = p.text
-            original = txt
+            txt = p.text.strip()
+            low = txt.lower()
             
-            for pattern, val in updates:
-                # Check matching
-                if re.search(pattern, txt, re.IGNORECASE):
-                    # We found a line. Now we need to be careful not to destroy formatting?
-                    # Since we are replacing numbers, we can reconstruct the string.
-                    # But pptx runs make this hard. 
-                    # If the text is robustly in one run, simple replace works.
-                    # If split, we operate on the concatenated text of the paragraph and clear runs.
-                    
-                    # Construct new text by replacing the number group
-                    # Regex explanation:
-                    # Group 1: Label (Window)
-                    # Group 2: The value/token to replace
-                    
-                    def replacer(match):
-                        # match input: "Windows: (79.38 kWh"
-                        # We want: "Windows: (<win_val> kWh"
-                        full = match.group(0) # "Windows: (79.38 kWh"
-                        val_part = match.group(2) # "79.38" or "{{...}}"
-                        return full.replace(val_part, val)
+            # Check if this is a target line: contains "kWh" and one of our keywords
+            matched_key = None
+            for key in targets:
+                if key in low and "kwh" in low:
+                    matched_key = key
+                    break
+            
+            if not matched_key:
+                continue
 
-                    new_txt = re.sub(pattern, replacer, txt, flags=re.IGNORECASE)
-                    
-                    if new_txt != txt:
-                        # Apply change
-                        p.text = new_txt
-                        # Re-apply styles? This is risky if bolding was used on just the number.
-                        # Assuming the line style is uniform or acceptable.
-                        if p.runs:
-                            p.runs[0].font.name = 'Arial' # Standardize if possible
-
-
+            # Found a line to fix!
+            val, letter = targets[matched_key]
+            
+            # Extract Label (everything before the colon or first parenthesis)
+            # E.g. "Windows: (..." -> "Windows: "
+            # Or "Windows (..." -> "Windows "
+            label_match = re.search(r"^([^\(:]+)([:\s]*)", txt)
+            label = label_match.group(0) if label_match else "Element: "
+            
+            # Rebuild Paragraph completely
+            p.clear() 
+            
+            # Run 1: Label + Value + Unit
+            r1 = p.add_run()
+            r1.text = f"{label}({val} kWh/m²·year) => "
+            r1.font.name = 'Arial'
+            r1.font.size = Pt(14) # Approx size, adjust if needed
+            r1.font.bold = False
+            
+            # Run 2: Letter (BOLD)
+            r2 = p.add_run()
+            r2.text = f"{letter}"
+            r2.font.name = 'Arial'
+            r2.font.size = Pt(20) # Significantly larger/bolder
+            r2.font.bold = True
+            # Color? (Assume default black or inherit)
 
 
 def _fix_slide9_financials(prs: Presentation, token_map: Dict[str, str]) -> None:
     """
-    Ensure the Financial Impact Table has the 15-year row.
+    Ensure the "Multi-Year Discounted Monetary Cost of Heat Losses" Table has the 15-year row.
     Table Headers: "Time Horizon", "Windows' Heat Loss", "Wall' Heat Loss", "All Façade Parts' Heat Loss"
-    Existing Rows: 1, 5, 10, 30.
-    Target Rows: 1, 5, 10, 15, 30.
     """
     
-    target_table = None
-    
     # Iterate likely slides
-    # User says Page 9, so index 8. Checking 7/9 too.
     for slide_idx in [8, 7, 9]:
         try:
             slide = prs.slides[slide_idx]
         except IndexError:
             continue
             
-        for shape in _iter_shapes(slide):
-            if shape.has_table:
-                # Check header row for keywords
-                try:
-                    row0_text = " ".join([c.text_frame.text for c in shape.table.rows[0].cells]).lower()
-                    print(f"DEBUG: Slide {slide_idx} Table Header: {row0_text}") # DEBUG LOG
-                    # User provided: "Time Horizon", "Windows' Heat Loss", "Wall' Heat Loss"
-                    # User's text example shows: "Time Horizon Windows’ Heat Loss Wall’ Heat Loss All Façade Parts’ Heat Loss"
-                    # My check: "time" AND "heat loss". This SHOULD match.
-                    if "time" in row0_text and "heat loss" in row0_text:
-                        print(f"DEBUG: FOUND TARGET TABLE on Slide {slide_idx}")
-                        target_table = shape.table
-                        break
-                except Exception as e:
-                    print(f"DEBUG: Error reading table header on Slide {slide_idx}: {e}")
-                    continue
-        if target_table:
-            break
+        # Find ALL tables on the slide
+        tables = [shape.table for shape in _iter_shapes(slide) if shape.has_table]
+        
+        for table in tables:
+            try:
+                # Check header row
+                if len(table.rows) == 0: continue
+                
+                row0_text = " ".join([c.text_frame.text for c in table.rows[0].cells]).lower()
+                
+                # We specifically want the Heat Loss table (user called it "Second table")
+                # Matches: "time" AND "heat loss"
+                if "time" in row0_text and "heat loss" in row0_text:
+                    _ensure_15y_row(table, token_map, is_heat_loss=True)
+                    
+                # We might ALSO want to fix the Financial Impact table (Savings/Cost) just in case
+                elif "time" in row0_text and "savings" in row0_text:
+                    _ensure_15y_row(table, token_map, is_heat_loss=False)
+                    
+            except Exception as e:
+                print(f"Error checking table on Slide {slide_idx}: {e}")
+
+def _ensure_15y_row(table, token_map, is_heat_loss: bool):
+    """
+    Helper to insert 15y row into a specific table.
+    """
+    rows = table.rows
     
-    if not target_table:
-        print("DEBUG: Financial table not found on slides 8, 7, or 9.")
-        return
+    # Check if 15y exists
+    if any("15 year" in r.cells[0].text_frame.text.lower() for r in rows):
+        return # Already done
 
-    # Check existing rows to decide action
-    # We expect: 1, 5, 10, 30.
-    # We want to insert 15 between 10 and 30.
-    
-    rows = target_table.rows
-    last_row_idx = len(rows) - 1
-    if last_row_idx < 1:
-        return
+    # Determine values based on table type
+    if is_heat_loss:
+        # Table: Time | Win Loss | Wall Loss | Total Loss
+        val_win = token_map.get("PV_WINDOW_15Y_EUR", "0") # Note: PV_WINDOW vs PV_WINDOWS
+        val_wall = token_map.get("PV_WALL_15Y_EUR", "0")
+        val_total = token_map.get("PV_TOTAL_15Y_EUR", "0")
+        label_15 = "15 Years"
+    else:
+        # Table: Time | Savings | Cost
+        try:
+            val_win = token_map.get("PV_TOTAL_15Y_EUR", "0") # Savings
+            val_wall = token_map.get("PV_TOTAL_15Y_EUR", "0") # Cost (Cost of Inaction)
+            val_total = "" # No 3rd col
+        except:
+             val_win=val_wall="0"
+        label_15 = "15 Years"
 
-    # Helper to check if row is "15 Years"
-    def is_15y(r):
-        return "15 year" in r.cells[0].text_frame.text.lower()
-    
-    # Helper to check if row is "30 Years"
-    def is_30y(r):
-        return "30 year" in r.cells[0].text_frame.text.lower()
-
-    # Check if 15y already exists
-    if any(is_15y(r) for r in rows):
-        return
-
-    # Check if 30y exists (to decide if we insert before it or just append)
+    # Find insertion point (before 30y)
     row_30_idx = -1
     for i, r in enumerate(rows):
-        if is_30y(r):
+        if "30 year" in r.cells[0].text_frame.text.lower():
             row_30_idx = i
             break
-    
-    # Token Values
-    val_win = token_map.get("PV_WINDOWS_15Y_EUR", "0")
-    val_wall = token_map.get("PV_WALL_15Y_EUR", "0")
-    val_total = token_map.get("PV_TOTAL_15Y_EUR", "0")
+            
+    # Add new row
+    new_row = table.rows.add()
+    try:
+        new_row.height = table.rows[1].height
+    except:
+        pass
 
-    def fill_row(row, label, v_win, v_wall, v_tot):
-        # Cell 0: Label
-        row.cells[0].text_frame.text = label
-        
-        # Cell 1: Windows
-        row.cells[1].text_frame.text = f"€{v_win}"
-        
-        # Cell 2: Wall
-        row.cells[2].text_frame.text = f"€{v_wall}"
-        
-        # Cell 3: Total
-        # Use safe index in case table cols changed, but user implied 4 cols
-        if len(row.cells) > 3:
-            row.cells[3].text_frame.text = f"€{v_tot}"
+    def set_cell(cell, text, bold=False):
+        cell.text_frame.text = text
+        for p in cell.text_frame.paragraphs:
+            p.font.name = 'Arial'
+            p.font.size = Pt(10)
+            p.font.bold = bold
+            p.alignment = 1 # Center? Or left? Let's generic it.
 
-        # Styling: Bold everything? Or match template?
-        # Let's just set bold for now as it's better.
-        for cell in row.cells:
-            for p in cell.text_frame.paragraphs:
-                p.font.name = 'Arial'
-                p.font.size = Pt(10) # Guessing size, maybe safer not to touch if not needed?
-                # Actually, forcing size might break layout. Let's ONLY set text.
-                # Re-set text logic: simple assignment destroys runs. 
-                # If we want to preserve style, we should modify runs.
-                # But here we are creating new content, so simple assignment is safer than complexity.
-
+    # If we need to insert before 30y
     if row_30_idx != -1:
-        # We found 30y. We need to shift it down.
-        # Add new row at bottom
-        new_row = target_table.rows.add()
-        new_row.height = rows[row_30_idx].height
+        # 1. Copy 30y data to new row
+        row_30 = rows[row_30_idx]
+        for c_idx, cell in enumerate(row_30.cells):
+             set_cell(new_row.cells[c_idx], cell.text_frame.text, bold=False) # Preserve 30y text
         
-        # Copy 30y content to new row (which becomes the new 30y)
-        # We need to read the *current* 30y values first? 
-        # Or just re-calculate them? We have tokens for 30y!
-        # Better to re-populate 30y with tokens to ensure data freshness.
-        
-        token_win_30 = token_map.get("PV_WINDOWS_30Y_EUR", "0")
-        token_wall_30 = token_map.get("PV_WALL_30Y_EUR", "0")
-        token_total_30 = token_map.get("PV_TOTAL_30Y_EUR", "0")
-        
-        fill_row(new_row, "30 Years", token_win_30, token_wall_30, token_total_30)
-        
-        # Now overwrite the old 30y row (at row_30_idx) with 15y data
-        # This effectively "inserts" 15y where 30y was.
+        # 2. Overwrite 30y row with 15y data
         target_row = rows[row_30_idx]
-        fill_row(target_row, "15 Years", val_win, val_wall, val_total)
-        
     else:
-        # No 30y found? Just append 15y.
-        new_row = target_table.rows.add()
-        fill_row(new_row, "15 Years", val_win, val_wall, val_total)
+        target_row = new_row
+
+    # Fill target row with 15y data
+    set_cell(target_row.cells[0], "15 Years", bold=False)  # Label
+    set_cell(target_row.cells[1], f"€{val_win}", bold=True) # Col 1
+    if len(target_row.cells) > 2:
+        set_cell(target_row.cells[2], f"€{val_wall}", bold=True) # Col 2
+    if len(target_row.cells) > 3:
+        set_cell(target_row.cells[3], f"€{val_total}", bold=True) # Col 3
+
 
 
 
