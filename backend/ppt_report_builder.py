@@ -466,15 +466,19 @@ def _fix_slide8_values(prs: Presentation, token_map: Dict[str, str]) -> None:
 
 
 
+
 def _fix_slide9_financials(prs: Presentation, token_map: Dict[str, str]) -> None:
     """
     Ensure the Financial Impact Table has the 15-year row.
-    Searches Slides 8, 9, 10 (indicies 7, 8, 9) just in case template shifted.
+    Table Headers: "Time Horizon", "Windows' Heat Loss", "Wall' Heat Loss", "All Façade Parts' Heat Loss"
+    Existing Rows: 1, 5, 10, 30.
+    Target Rows: 1, 5, 10, 15, 30.
     """
     
     target_table = None
     
     # Iterate likely slides
+    # User says Page 9, so index 8. Checking 7/9 too.
     for slide_idx in [8, 7, 9]:
         try:
             slide = prs.slides[slide_idx]
@@ -486,7 +490,8 @@ def _fix_slide9_financials(prs: Presentation, token_map: Dict[str, str]) -> None
                 # Check header row for keywords
                 try:
                     row0_text = " ".join([c.text_frame.text for c in shape.table.rows[0].cells]).lower()
-                    if "time" in row0_text and "savings" in row0_text:
+                    # User provided: "Time Horizon", "Windows' Heat Loss", "Wall' Heat Loss"
+                    if "time" in row0_text and "heat loss" in row0_text:
                         target_table = shape.table
                         break
                 except Exception:
@@ -495,44 +500,95 @@ def _fix_slide9_financials(prs: Presentation, token_map: Dict[str, str]) -> None
             break
     
     if not target_table:
+        print("DEBUG: Financial table not found on slides 8, 7, or 9.")
         return
 
-    # Check for "15 Years"
-    has_15y = False
-    for row in target_table.rows:
-        try:
-            # Check first cell
-            txt = row.cells[0].text_frame.text.lower()
-            if "15 year" in txt:
-                has_15y = True
-                break
-        except Exception:
-            pass
+    # Check existing rows to decide action
+    # We expect: 1, 5, 10, 30.
+    # We want to insert 15 between 10 and 30.
+    
+    rows = target_table.rows
+    last_row_idx = len(rows) - 1
+    if last_row_idx < 1:
+        return
 
-    if not has_15y:
-        # Add row
-        new_row = target_table.rows.add()
-        # Attempt to copy height from last row
-        new_row.height = target_table.rows[-2].height 
-        
+    # Helper to check if row is "15 Years"
+    def is_15y(r):
+        return "15 year" in r.cells[0].text_frame.text.lower()
+    
+    # Helper to check if row is "30 Years"
+    def is_30y(r):
+        return "30 year" in r.cells[0].text_frame.text.lower()
+
+    # Check if 15y already exists
+    if any(is_15y(r) for r in rows):
+        return
+
+    # Check if 30y exists (to decide if we insert before it or just append)
+    row_30_idx = -1
+    for i, r in enumerate(rows):
+        if is_30y(r):
+            row_30_idx = i
+            break
+    
+    # Token Values
+    val_win = token_map.get("PV_WINDOWS_15Y_EUR", "0")
+    val_wall = token_map.get("PV_WALL_15Y_EUR", "0")
+    val_total = token_map.get("PV_TOTAL_15Y_EUR", "0")
+
+    def fill_row(row, label, v_win, v_wall, v_tot):
         # Cell 0: Label
-        c0 = new_row.cells[0]
-        c0.text_frame.text = "15 Years"
+        row.cells[0].text_frame.text = label
         
-        # Cell 1: Savings
-        c1 = new_row.cells[1]
-        val_sav = token_map.get("PV_TOTAL_15Y_EUR", "0")
-        c1.text_frame.text = f"€{val_sav}"
-        c1.text_frame.paragraphs[0].font.bold = True
-        # Try to set color to Green (RGB 22, 163, 74 / #16a34a)
-        # Without explicit RGB import, maybe we assume template style or leave as bold.
+        # Cell 1: Windows
+        row.cells[1].text_frame.text = f"€{v_win}"
         
-        # Cell 2: Cost
-        c2 = new_row.cells[2]
-        val_cost = token_map.get("PV_TOTAL_15Y_EUR", "0") 
-        c2.text_frame.text = f"€{val_cost}"
-        c2.text_frame.paragraphs[0].font.bold = True
-        # Red likely needed here.
+        # Cell 2: Wall
+        row.cells[2].text_frame.text = f"€{v_wall}"
+        
+        # Cell 3: Total
+        # Use safe index in case table cols changed, but user implied 4 cols
+        if len(row.cells) > 3:
+            row.cells[3].text_frame.text = f"€{v_tot}"
+
+        # Styling: Bold everything? Or match template?
+        # Let's just set bold for now as it's better.
+        for cell in row.cells:
+            for p in cell.text_frame.paragraphs:
+                p.font.name = 'Arial'
+                p.font.size = Pt(10) # Guessing size, maybe safer not to touch if not needed?
+                # Actually, forcing size might break layout. Let's ONLY set text.
+                # Re-set text logic: simple assignment destroys runs. 
+                # If we want to preserve style, we should modify runs.
+                # But here we are creating new content, so simple assignment is safer than complexity.
+
+    if row_30_idx != -1:
+        # We found 30y. We need to shift it down.
+        # Add new row at bottom
+        new_row = target_table.rows.add()
+        new_row.height = rows[row_30_idx].height
+        
+        # Copy 30y content to new row (which becomes the new 30y)
+        # We need to read the *current* 30y values first? 
+        # Or just re-calculate them? We have tokens for 30y!
+        # Better to re-populate 30y with tokens to ensure data freshness.
+        
+        token_win_30 = token_map.get("PV_WINDOWS_30Y_EUR", "0")
+        token_wall_30 = token_map.get("PV_WALL_30Y_EUR", "0")
+        token_total_30 = token_map.get("PV_TOTAL_30Y_EUR", "0")
+        
+        fill_row(new_row, "30 Years", token_win_30, token_wall_30, token_total_30)
+        
+        # Now overwrite the old 30y row (at row_30_idx) with 15y data
+        # This effectively "inserts" 15y where 30y was.
+        target_row = rows[row_30_idx]
+        fill_row(target_row, "15 Years", val_win, val_wall, val_total)
+        
+    else:
+        # No 30y found? Just append 15y.
+        new_row = target_table.rows.add()
+        fill_row(new_row, "15 Years", val_win, val_wall, val_total)
+
 
 
 
