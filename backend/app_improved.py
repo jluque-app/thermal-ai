@@ -19,6 +19,8 @@ import time
 import hmac
 import hashlib
 
+print("DEBUG: Force Deploy - Route Fix Verification 001")
+
 import sys
 import os
 import json
