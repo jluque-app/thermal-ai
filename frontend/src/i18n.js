@@ -38,14 +38,17 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
+    lng: localStorage.getItem('thermalai_lang') || 'en', // Default to English always
     fallbackLng: 'en',
     supportedLngs: ['en', 'de', 'sv', 'nl', 'fr', 'hu', 'pl', 'sk', 'cs', 'no', 'fi', 'it', 'es'],
     interpolation: {
-      escapeValue: false, // react already safes from xss
+      escapeValue: false,
     },
     detection: {
-      order: ['querystring', 'cookie', 'localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage', 'cookie'],
+      // Only restore explicit user choice from localStorage — no browser auto-detect
+      order: ['localStorage'],
+      lookupLocalStorage: 'thermalai_lang',
+      caches: ['localStorage'],
     }
   });
 

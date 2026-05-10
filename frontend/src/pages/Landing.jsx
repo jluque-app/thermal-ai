@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Check, Zap, FileText, Users, Building, Volume2, VolumeX } from 'lucide-react';
@@ -10,23 +10,11 @@ export default function Landing() {
     const [isMuted, setIsMuted] = useState(true);
     const videoRef = useRef(null);
 
-    useEffect(() => {
-        const savedLang = localStorage.getItem('i18nextLng');
-        if (!savedLang || savedLang.startsWith('en')) {
-            fetch('https://api.country.is/')
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.country) {
-                        const countryCode = data.country.toLowerCase();
-                        const supportedLangs = ['de', 'sv', 'nl', 'fr', 'hu', 'pl', 'sk', 'cs', 'no', 'fi', 'it', 'es'];
-                        if (supportedLangs.includes(countryCode)) {
-                            i18n.changeLanguage(countryCode);
-                        }
-                    }
-                })
-                .catch(err => console.log("Geoloc failed", err));
-        }
-    }, [i18n]);
+    const handleLangChange = (e) => {
+        const lang = e.target.value;
+        localStorage.setItem('thermalai_lang', lang);
+        i18n.changeLanguage(lang);
+    };
 
     const toggleMute = () => {
         if (videoRef.current) {
@@ -45,7 +33,7 @@ export default function Landing() {
             {/* Language Selector */}
             <div className="absolute top-6 right-6 z-30">
                 <select 
-                    onChange={(e) => i18n.changeLanguage(e.target.value)}
+                    onChange={handleLangChange}
                     value={i18n.language ? i18n.language.split('-')[0] : 'en'}
                     className="bg-black/50 text-white border border-white/20 rounded-md px-3 py-1.5 backdrop-blur-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
                 >
