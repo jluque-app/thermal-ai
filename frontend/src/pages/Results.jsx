@@ -172,16 +172,16 @@ export default function Results() {
       // 1. Construct Building Object
       const b = {
         id: payload?.meta?.analysis_id || crypto.randomUUID(),
-        lat: parseFloat(payload?.raw?.inputs?.latitude || payload?.raw?.inputs?.gps_lat || meta.latitude || 0),
-        lng: parseFloat(payload?.raw?.inputs?.longitude || payload?.raw?.inputs?.gps_lon || meta.longitude || 0),
-        addr: meta.address || "Unknown Address",
+        lat: parseFloat(payload?.raw?.inputs?.latitude || payload?.raw?.inputs?.gps_lat || meta.latitude || 47.6833), // Fallback to Gyor
+        lng: parseFloat(payload?.raw?.inputs?.longitude || payload?.raw?.inputs?.gps_lon || meta.longitude || 17.6351), // Fallback to Gyor
+        addr: meta.address || "ThermalAI Demo Building",
         type: meta.building_type || "Unknown Type",
         // Basic rating logic based on letter
         rating: (payload.report?.headline?.eec_letter || "C") === "A" ? "good" : (payload.report?.headline?.eec_letter === "B" || payload.report?.headline?.eec_letter === "C") ? "medium" : "poor",
         loss: payload.report?.headline?.eec_letter || "N/A",
         savings: `€${formatNumber(payload.report?.financials?.savings_1y, 0)}/yr`,
         sqft: `${formatNumber(meta.floor_area_m2, 0)} m²`,
-        google_maps_link: meta.google_maps_link || payload.raw?.inputs?.google_maps_link,
+        google_maps_link: meta.google_maps_link || payload.raw?.inputs?.google_maps_link || "https://maps.google.com/?q=47.6833,17.6351",
         reportData: {
           ...payload,
           report: {
@@ -233,7 +233,10 @@ export default function Results() {
     }
   };
 
-  const handleExportPDF = () => handleExport('pdf');
+  const handleExportPDF = () => {
+    // Backend LibreOffice conversion is unavailable. Native browser print is the cleanest way.
+    window.print();
+  };
   const handleExportPPT = () => handleExport('pptx');
 
   if (!payload) {
