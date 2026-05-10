@@ -40,7 +40,7 @@ const getAppParams = () => {
 		appId: getAppParamValue("app_id", { defaultValue: "" }), // No longer used
 		token: "", // Handled by AuthContext
 		fromUrl: window.location.href,
-		appBaseUrl: "", // Use relative paths
+		appBaseUrl: import.meta.env.DEV ? "" : "https://thermal-ai.onrender.com", // Route API calls to Render backend in production
 	}
 }
 
