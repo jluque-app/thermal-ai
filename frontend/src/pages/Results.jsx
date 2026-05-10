@@ -206,22 +206,16 @@ export default function Results() {
         return;
       }
 
-      // 3. Send to Backend
-      const backendUrl = "https://thermal-ai.onrender.com"; // Consider making this dynamic
-      const resp = await fetch(`${backendUrl}/v1/dashboard/add`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // Mock Auth Header for now until full auth
-          "x-user-email": user?.email || "guest"
-        },
-        body: JSON.stringify({
-          user_email: user?.email,
-          building: b
-        })
-      });
-
-      if (!resp.ok) throw new Error("Failed to save to dashboard");
+      // 3. Save to LocalStorage
+      const userEmail = user?.email || "guest";
+      const storageKey = `thermal_scans_${userEmail}`;
+      const existingScans = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      
+      // Prevent duplicates by ID
+      const filteredScans = existingScans.filter(scan => scan.id !== b.id);
+      filteredScans.push(b);
+      
+      localStorage.setItem(storageKey, JSON.stringify(filteredScans));
 
       // Navigate to Dashboard and highlight the new building
       navigate('/Dashboard', {

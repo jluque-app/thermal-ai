@@ -75,27 +75,14 @@ export default function Dashboard() {
         if (!confirm("Are you sure you want to delete this analysis?")) return;
 
         try {
-            const backendUrl = "https://thermal-ai.onrender.com";
-            const resp = await fetch(`${backendUrl}/v1/dashboard/delete`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    // Mock Auth
-                    "x-user-email": user?.email
-                },
-                body: JSON.stringify({
-                    user_email: user?.email,
-                    building_id: building.id
-                })
-            });
-
-            if (resp.ok) {
-                // Remove from local state
-                setUserBuildings(prev => prev.filter(b => b.id !== building.id));
-                if (selectedBuilding?.id === building.id) setSelectedBuilding(null);
-            } else {
-                alert("Cannot delete this building (it might be a system demo building).");
-            }
+            const userEmail = user?.email || "guest";
+            const storageKey = `thermal_scans_${userEmail}`;
+            const localData = JSON.parse(localStorage.getItem(storageKey) || "[]");
+            const newLocalData = localData.filter(b => b.id !== building.id);
+            localStorage.setItem(storageKey, JSON.stringify(newLocalData));
+            
+            setUserBuildings(newLocalData);
+            if (selectedBuilding?.id === building.id) setSelectedBuilding(null);
         } catch (err) {
             console.error(err);
             alert("Failed to delete.");
@@ -106,18 +93,17 @@ export default function Dashboard() {
     const activeConfig = cityConfigs[selectedCity] || cityConfigs.gyor;
     const [userBuildings, setUserBuildings] = useState([]);
 
-    // Fetch User Buildings
+    // Fetch User Buildings from LocalStorage
     useEffect(() => {
-        if (user?.email) {
-            const backendUrl = "https://thermal-ai.onrender.com";
-            fetch(`${backendUrl}/v1/dashboard`, {
-                headers: { "x-user-email": user.email }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (Array.isArray(data)) setUserBuildings(data);
-                })
-                .catch(err => console.error("Failed to load dashboard:", err));
+        const userEmail = user?.email || "guest";
+        const storageKey = `thermal_scans_${userEmail}`;
+        try {
+            const localData = JSON.parse(localStorage.getItem(storageKey) || "[]");
+            if (Array.isArray(localData)) {
+                setUserBuildings(localData);
+            }
+        } catch (err) {
+            console.error("Failed to load dashboard from local storage:", err);
         }
     }, [user]);
 
