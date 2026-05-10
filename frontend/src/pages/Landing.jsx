@@ -45,7 +45,7 @@ export default function Landing() {
                     {/* Unmute Button */}
                     <button 
                         onClick={toggleMute}
-                        className="absolute bottom-6 right-6 z-20 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-md transition-all border border-white/10"
+                        className="absolute top-28 right-6 z-20 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-md transition-all border border-white/10"
                         aria-label="Toggle Mute"
                     >
                         {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
