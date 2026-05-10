@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/v1/(.*)",
+      "destination": "https://thermal-ai.onrender.com/v1/$1"
+    },
+    {
+      "source": "/analyze",
+      "destination": "https://thermal-ai.onrender.com/analyze"
+    },
+    {
+      "source": "/health",
+      "destination": "https://thermal-ai.onrender.com/health"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
