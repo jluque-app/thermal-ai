@@ -30,29 +30,6 @@ export default function Landing() {
     return (
         <div className="bg-slate-50 min-h-screen font-sans text-slate-900">
 
-            {/* Language Selector */}
-            <div className="absolute top-6 right-6 z-30">
-                <select 
-                    onChange={handleLangChange}
-                    value={i18n.language ? i18n.language.split('-')[0] : 'en'}
-                    className="bg-black/50 text-white border border-white/20 rounded-md px-3 py-1.5 backdrop-blur-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-                >
-                    <option value="en">English</option>
-                    <option value="de">Deutsch</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
-                    <option value="it">Italiano</option>
-                    <option value="sv">Svenska</option>
-                    <option value="nl">Nederlands</option>
-                    <option value="hu">Magyar</option>
-                    <option value="pl">Polski</option>
-                    <option value="sk">Slovenčina</option>
-                    <option value="cs">Čeština</option>
-                    <option value="no">Norsk</option>
-                    <option value="fi">Suomi</option>
-                </select>
-            </div>
-
             {/* Hero Section */}
             <section className="relative pt-20 pb-32 overflow-hidden">
                 <div className="absolute inset-0 z-0 bg-slate-900">

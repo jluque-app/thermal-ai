@@ -9,8 +9,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import ScrollToTop from "@/components/ScrollToTop";
 import { LoginDialog } from "@/components/LoginDialog";
-
-
+import { useTranslation } from 'react-i18next';
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
@@ -20,6 +19,13 @@ export default function Layout({ children, currentPageName }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const { t, i18n } = useTranslation();
+
+  const handleLangChange = (e) => {
+      const lang = e.target.value;
+      localStorage.setItem('thermalai_lang', lang);
+      i18n.changeLanguage(lang);
+  };
 
   useEffect(() => {
     if (user) {
@@ -114,6 +120,29 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-4">
+            <select 
+                onChange={handleLangChange}
+                value={i18n.language ? i18n.language.split('-')[0] : 'en'}
+                className={cn(
+                  "border rounded-md px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer transition-colors",
+                  scrolled ? "bg-white text-slate-700 border-slate-200" : "bg-black/50 text-white border-white/20 backdrop-blur-md"
+                )}
+            >
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="de">Deutsch</option>
+                <option value="sv">Svenska</option>
+                <option value="nl">Nederlands</option>
+                <option value="fr">Français</option>
+                <option value="hu">Magyar</option>
+                <option value="pl">Polski</option>
+                <option value="sk">Slovenčina</option>
+                <option value="cs">Čeština</option>
+                <option value="no">Norsk</option>
+                <option value="fi">Suomi</option>
+                <option value="it">Italiano</option>
+            </select>
+
             {isLoadingAuth ? (
               <div className="h-9 w-24 bg-slate-100 animate-pulse rounded-full"></div>
             ) : user ? (
@@ -163,6 +192,25 @@ export default function Layout({ children, currentPageName }) {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 w-full glass border-t border-white/10 p-6 flex flex-col gap-4 animate-in slide-in-from-top-4">
+            <select 
+                onChange={handleLangChange}
+                value={i18n.language ? i18n.language.split('-')[0] : 'en'}
+                className="bg-black/50 text-white border border-white/20 rounded-md px-3 py-2 text-base font-medium focus:outline-none w-full mb-2"
+            >
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="de">Deutsch</option>
+                <option value="sv">Svenska</option>
+                <option value="nl">Nederlands</option>
+                <option value="fr">Français</option>
+                <option value="hu">Magyar</option>
+                <option value="pl">Polski</option>
+                <option value="sk">Slovenčina</option>
+                <option value="cs">Čeština</option>
+                <option value="no">Norsk</option>
+                <option value="fi">Suomi</option>
+                <option value="it">Italiano</option>
+            </select>
             {navLinks.map((link) => (
               <button
                 key={link.name}
