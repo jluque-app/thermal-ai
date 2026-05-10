@@ -151,6 +151,22 @@ export default function AppHome() {
                     </Button>
                 </div>
             </section>
+
+            {/* Demo Video Full Walkthrough */}
+            <section className="py-20 bg-slate-50 border-t border-slate-200">
+                <div className="container mx-auto px-6 max-w-5xl">
+                    <div className="text-center mb-10">
+                        <h2 className="text-3xl font-bold text-slate-900 mb-4">See ThermalAI in Action</h2>
+                        <p className="text-lg text-slate-600">Watch a complete 3-minute walkthrough of the automated building physics analysis</p>
+                    </div>
+                    <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200 bg-black aspect-video flex items-center justify-center">
+                        <video controls preload="metadata" className="w-full h-full object-cover">
+                            <source src="/videos/Final_Demo_Video_v2.mp4#t=0.1" type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+            </section>
         </div >
     );
 }
