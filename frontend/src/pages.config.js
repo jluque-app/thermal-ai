@@ -11,6 +11,7 @@ import NewAnalysis from './pages/NewAnalysis';
 import NewAnalysisProtected from './pages/NewAnalysisProtected';
 import PlanSelection from './pages/PlanSelection';
 import Results from './pages/Results';
+import Transition from './pages/Transition';
 import __Layout from './Layout.jsx';
 
 
@@ -28,6 +29,7 @@ const PAGES = {
     "PlanSelection": PlanSelection,
     "CitySelection": CitySelection,
     "Results": Results,
+    "Transition": Transition,
 };
 
 export const pagesConfig = {

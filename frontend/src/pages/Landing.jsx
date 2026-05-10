@@ -1,46 +1,96 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Check, Zap, FileText, Users, Building } from 'lucide-react';
+import { ArrowRight, Check, Zap, FileText, Users, Building, Volume2, VolumeX } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function Landing() {
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
+    const [isMuted, setIsMuted] = useState(true);
+    const videoRef = useRef(null);
+
+    const toggleMute = () => {
+        if (videoRef.current) {
+            videoRef.current.muted = !videoRef.current.muted;
+            setIsMuted(videoRef.current.muted);
+        }
+    };
+
+    const currentLang = i18n.language ? i18n.language.toUpperCase().split('-')[0] : 'EN';
+    const supportedVideoLangs = ['DE', 'SV', 'NL', 'FR', 'HU', 'PL', 'SK', 'CS', 'NO', 'FI', 'IT', 'ES'];
+    const videoLang = supportedVideoLangs.includes(currentLang) ? currentLang : 'UK';
 
     return (
         <div className="bg-slate-50 min-h-screen font-sans text-slate-900">
 
+            {/* Language Selector */}
+            <div className="absolute top-6 right-6 z-30">
+                <select 
+                    onChange={(e) => i18n.changeLanguage(e.target.value)}
+                    value={i18n.language ? i18n.language.split('-')[0] : 'en'}
+                    className="bg-black/50 text-white border border-white/20 rounded-md px-3 py-1.5 backdrop-blur-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                >
+                    <option value="en">English</option>
+                    <option value="de">Deutsch</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="it">Italiano</option>
+                    <option value="sv">Svenska</option>
+                    <option value="nl">Nederlands</option>
+                    <option value="hu">Magyar</option>
+                    <option value="pl">Polski</option>
+                    <option value="sk">Slovenčina</option>
+                    <option value="cs">Čeština</option>
+                    <option value="no">Norsk</option>
+                    <option value="fi">Suomi</option>
+                </select>
+            </div>
+
             {/* Hero Section */}
             <section className="relative pt-20 pb-32 overflow-hidden">
-                <div className="absolute inset-0 bg-slate-50 z-0" />
+                <div className="absolute inset-0 z-0 bg-slate-900">
+                    <video 
+                        ref={videoRef}
+                        autoPlay 
+                        loop 
+                        muted={isMuted}
+                        playsInline 
+                        className="w-full h-full object-cover opacity-50"
+                        src={`/videos/Final_Marketing_Video_${videoLang}.mp4`}
+                    />
+                    {/* Unmute Button */}
+                    <button 
+                        onClick={toggleMute}
+                        className="absolute bottom-6 right-6 z-20 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-md transition-all border border-white/10"
+                        aria-label="Toggle Mute"
+                    >
+                        {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                    </button>
+                </div>
                 <div className="container mx-auto px-6 relative z-10">
                     <div className="max-w-4xl mx-auto text-center space-y-6">
-                        <p className="text-sm font-bold tracking-widest text-emerald-600 uppercase">BY ALLRETECH</p>
-                        <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900">
-                            Thermal<span className="text-emerald-600">AI</span>
+                        <p className="text-sm font-bold tracking-widest text-emerald-400 drop-shadow-lg uppercase">BY ALLRETECH</p>
+                        <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white drop-shadow-lg">
+                            {t('title') || 'ThermalAI'}
                         </h1>
-                        <h2 className="text-2xl md:text-3xl font-medium text-slate-700">
-                            AI Building-Physics Expertise for Real Estate
+                        <h2 className="text-2xl md:text-3xl font-medium text-slate-200 drop-shadow-lg">
+                            {t('subtitle') || 'AI Building-Physics Expertise for Real Estate'}
                         </h2>
-                        <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                            From thermal images to structured heat-loss insights. ThermalAI combines specialized AI interpretation with deterministic analysis—designed for professionals who need correctness, transparency, and regulatory awareness.
+                        <p className="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed drop-shadow-lg">
+                            {t('description') || 'From thermal images to structured heat-loss insights. ThermalAI combines specialized AI interpretation with deterministic analysis—designed for professionals who need correctness, transparency, and regulatory awareness.'}
                         </p>
 
                         <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center">
-                            <Button onClick={() => {
-                                if (window.location.hostname.includes('localhost')) {
-                                    navigate('/AppHome');
-                                } else {
-                                    window.location.href = 'https://app.thermalai.eu';
-                                }
-                            }} className="h-14 px-8 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold shadow-lg hover:shadow-emerald-500/30 transition-all">
-                                Run ThermalAI App <ArrowRight className="ml-2 w-5 h-5" />
+                            <Button onClick={() => navigate('/Transition')} className="h-14 px-8 text-lg bg-emerald-600 text-white hover:bg-emerald-700 rounded-full font-bold shadow-lg hover:shadow-emerald-500/30 transition-all border border-emerald-500">
+                                {t('run_app') || 'Run ThermalAI App'} <ArrowRight className="ml-2 w-5 h-5" />
                             </Button>
-                            <Button variant="outline" onClick={() => navigate('/ExpertPreview')} className="h-14 px-8 text-lg border-emerald-600 text-emerald-700 hover:bg-emerald-50 rounded-full font-bold transition-all">
-                                Chat ThermalAI Expert
+                            <Button variant="outline" onClick={() => navigate('/ExpertPreview')} className="h-14 px-8 text-lg border-emerald-400 text-emerald-400 hover:bg-emerald-900/50 hover:text-white rounded-full font-bold transition-all backdrop-blur-sm bg-black/30">
+                                {t('chat_expert') || 'Chat ThermalAI Expert'}
                             </Button>
                         </div>
-                        <p className="text-sm text-slate-500 pt-4">
-                            Preview is limited to 3 questions. For quantitative heat-loss estimates and reporting, use the ThermalAI App.
+                        <p className="text-sm text-slate-400 pt-4 drop-shadow-lg font-medium">
+                            {t('preview_limit') || 'Preview is limited to 3 questions. For quantitative heat-loss estimates and reporting, use the ThermalAI App.'}
                         </p>
                     </div>
                 </div>
@@ -50,41 +100,43 @@ export default function Landing() {
                 <div className="container mx-auto px-6">
                     <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
                         <div>
-                            <h2 className="text-3xl font-bold text-white mb-6">Make a Smart Retrofit Decision</h2>
+                            <h2 className="text-3xl font-bold text-white mb-6">{t('smart_retrofit') || 'Make a Smart Retrofit Decision'}</h2>
                             <ul className="space-y-4">
                                 <li className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-1"><Zap className="w-4 h-4" /></div>
                                     <div>
-                                        <h4 className="font-bold text-lg">Fast, Accurate, AI-Driven</h4>
-                                        <p className="text-slate-400 text-sm">Get actionable heat loss estimates instantly.</p>
+                                        <h4 className="font-bold text-lg">{t('fast_accurate') || 'Fast, Accurate, AI-Driven'}</h4>
+                                        <p className="text-slate-400 text-sm">{t('fast_desc') || 'Get actionable heat loss estimates instantly.'}</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0 mt-1"><Check className="w-4 h-4" /></div>
                                     <div>
-                                        <h4 className="font-bold text-lg">Non-Invasive Drone Imagery</h4>
-                                        <p className="text-slate-400 text-sm">Screens façades and roofs for residential, logistics, and retail buildings efficiently.</p>
+                                        <h4 className="font-bold text-lg">{t('drone') || 'Non-Invasive Drone Imagery'}</h4>
+                                        <p className="text-slate-400 text-sm">{t('drone_desc') || 'Screens façades and roofs for residential, logistics, and retail buildings efficiently.'}</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 mt-1"><Check className="w-4 h-4" /></div>
                                     <div>
-                                        <h4 className="font-bold text-lg">Identify Hidden Issues</h4>
-                                        <p className="text-slate-400 text-sm">Detect thermal bridges and air infiltrations accurately.</p>
+                                        <h4 className="font-bold text-lg">{t('hidden_issues') || 'Identify Hidden Issues'}</h4>
+                                        <p className="text-slate-400 text-sm">{t('hidden_desc') || 'Detect thermal bridges and air infiltrations accurately.'}</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center flex-shrink-0 mt-1"><Check className="w-4 h-4" /></div>
                                     <div>
-                                        <h4 className="font-bold text-lg">Massive Cost Savings</h4>
-                                        <p className="text-slate-400 text-sm">Evaluate retrofitting costs to maximize your ROI.</p>
+                                        <h4 className="font-bold text-lg">{t('cost_savings') || 'Massive Cost Savings'}</h4>
+                                        <p className="text-slate-400 text-sm">{t('cost_desc') || 'Evaluate retrofitting costs to maximize your ROI.'}</p>
                                     </div>
                                 </li>
                             </ul>
                         </div>
-                        <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-700 bg-slate-800 aspect-video flex items-center justify-center">
-                            {/* The video will be embedded here. For now, it's ready. */}
-                            <img src="/marketing_video.webp" alt="ThermalAI Marketing Video" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                        <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-700 bg-black aspect-video flex items-center justify-center">
+                            <video controls preload="metadata" className="w-full h-full object-cover">
+                                <source src="/videos/Youtube video.mp4#t=0.1" type="video/mp4" />
+                                Your browser does not support the video tag.
+                            </video>
                         </div>
                     </div>
                 </div>
