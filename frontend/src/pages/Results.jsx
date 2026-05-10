@@ -183,15 +183,19 @@ export default function Results() {
         google_maps_link: meta.google_maps_link || payload.raw?.inputs?.google_maps_link || "https://maps.google.com/?q=47.6833,17.6351",
         reportData: {
           ...payload,
+          // Remove raw base64 inputs to save localstorage space
+          rgb_base64: undefined,
+          thermal_base64: undefined,
+          raw: undefined,
           report: {
             ...(payload.report || {}),
             images: {
               ...(payload.report?.images || {}),
-              // Explicitly inject resolved images to ensure Dashboard finds them
-              rgb_png_base64: rgbB64,
-              rgb_boxed_png_base64: rgbBoxedB64,
-              thermal_png_base64: thermalB64,
-              thermal_boxed_png_base64: thermalBoxedB64
+              // Only keep the essential thumbnail to avoid 5MB LocalStorage QuotaExceededError
+              thermal_boxed_png_base64: thermalBoxedB64,
+              rgb_png_base64: undefined,
+              rgb_boxed_png_base64: undefined,
+              thermal_png_base64: undefined
             }
           }
         }
@@ -232,7 +236,11 @@ export default function Results() {
     }
   };
 
-  const handleExportPDF = () => handleExport('pdf');
+  const handleExportPDF = () => {
+    // Render free-tier RAM is strictly 512MB. LibreOffice conversion causes an OOM crash.
+    // Reverting to native browser print dialog for stability.
+    window.print();
+  };
   const handleExportPPT = () => handleExport('pptx');
 
   if (!payload) {
