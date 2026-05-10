@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Check, Zap, FileText, Users, Building, Volume2, VolumeX } from 'lucide-react';
@@ -9,6 +9,24 @@ export default function Landing() {
     const { t, i18n } = useTranslation();
     const [isMuted, setIsMuted] = useState(true);
     const videoRef = useRef(null);
+
+    useEffect(() => {
+        const savedLang = localStorage.getItem('i18nextLng');
+        if (!savedLang || savedLang.startsWith('en')) {
+            fetch('https://api.country.is/')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.country) {
+                        const countryCode = data.country.toLowerCase();
+                        const supportedLangs = ['de', 'sv', 'nl', 'fr', 'hu', 'pl', 'sk', 'cs', 'no', 'fi', 'it', 'es'];
+                        if (supportedLangs.includes(countryCode)) {
+                            i18n.changeLanguage(countryCode);
+                        }
+                    }
+                })
+                .catch(err => console.log("Geoloc failed", err));
+        }
+    }, [i18n]);
 
     const toggleMute = () => {
         if (videoRef.current) {
@@ -308,7 +326,7 @@ export default function Landing() {
                                 Deterministic heat-loss estimation engine. Processes thermal and RGB images to detect hotspots, calculate heat-loss proxies, generate annualized estimates, and produce structured professional reports.
                             </p>
                             <div className="mt-8">
-                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => navigate('/AppHome')}>Go to App</Button>
+                                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => navigate('/Transition')}>Go to App</Button>
                             </div>
                         </div>
                     </div>

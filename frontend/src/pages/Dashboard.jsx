@@ -141,7 +141,7 @@ export default function Dashboard() {
                     <p className="text-sm text-slate-500">Welcome, {user?.email || 'User'}</p>
                 </div>
                 <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => navigate('/ExpertChat')} className="gap-2">
+                    <Button variant="outline" onClick={() => navigate('/ExpertPreview')} className="gap-2">
                         <MessageSquareText className="w-4 h-4" /> Expert AI
                     </Button>
                     <Button onClick={() => navigate('/NewAnalysis')} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
