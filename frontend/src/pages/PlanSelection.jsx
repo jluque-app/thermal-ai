@@ -21,53 +21,30 @@ export default function PlanSelection() {
       id: "community",
       name: "Community",
       price: "Free",
-      desc: "Perfect for testing the platform.",
-      features: ["3 Building Analyses / mo", "Basic Reports", "Web-only Access"],
-      cta: "Continue Free",
+      desc: "Perfect for testing the platform",
+      features: ["Up to 3 building analyses", "Basic heat-loss overview", "Key metrics and visual reports"],
+      cta: "Start Free",
       variant: "outline",
       popular: false
     },
     {
-      id: "project_scan_1",
-      name: "Single Scan",
-      price: "€99",
+      id: "project",
+      name: "Project",
+      price: "€9",
       unit: "/ scan",
-      desc: "One-time access to a full building analysis.",
-      features: ["Detailed Heat-Loss Breakdown", "Monetary Cost Estimates", "CO₂ Emissions Analysis", "Downloadable PPT/PDF"],
-      cta: "Buy Now",
-      variant: "default",
-      popular: false
-    },
-    {
-      id: "project_pack_10",
-      name: "Bundle of 10",
-      price: "€790",
-      unit: " total",
-      desc: "Save ~20%. Valid for a limited period.",
-      features: ["10 Full Analyses", "All 'Single Scan' features", "Component-level breakdown", "Shareable Reports"],
-      cta: "Get Bundle",
+      desc: "For professionals needing client-ready documentation",
+      features: ["Volume packs available", "Full heat-loss quantification", "Professional PDF reports", "ThermalAI Expert access included"],
+      cta: "Choose Project",
       variant: "default",
       popular: true
     },
     {
-      id: "project_pack_50",
-      name: "Bundle of 50",
-      price: "€2,900",
-      unit: " total",
-      desc: "For short-term projects or pilot programs.",
-      features: ["50 Full Analyses", "Bulk Processing", "Priority Support", "All Pro features"],
-      cta: "Get Bundle",
-      variant: "outline",
-      popular: false
-    },
-    {
-      id: "project_monthly",
-      name: "Subscription",
-      price: "€1,990",
-      unit: "/ month",
-      desc: "For high-volume continuous usage.",
-      features: ["50 Analyses / month", "Full Reports & exports", "CO₂ & Cost Analysis", "Ongoing Access"],
-      cta: "Subscribe",
+      id: "enterprise",
+      name: "Enterprise",
+      price: "Custom",
+      desc: "For large portfolios and city-wide programs",
+      features: ["Custom pricing for portfolios", "Dedicated support", "API access", "Team collaboration tools"],
+      cta: "Contact Sales",
       variant: "outline",
       popular: false
     }
@@ -88,37 +65,19 @@ export default function PlanSelection() {
         return;
       }
 
-      // Map planId directly to lookup_key for paid plans
-      const lookupKey = planId;
-
-      const baseUrl = appParams.appBaseUrl || "";
-      const resp = await fetch(`${baseUrl}/v1/billing/checkout`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lookup_key: lookupKey,
-          user_id: userId,
-          user_email: userEmail,
-          success_url: window.location.origin + "/BillingSuccess?session_id={CHECKOUT_SESSION_ID}&next=" + encodeURIComponent(nextPath),
-          cancel_url: window.location.origin + "/PlanSelection?canceled=true",
-        })
-      });
-
-      if (!resp.ok) {
-        const err = await resp.json();
-        throw new Error(err.error || "Checkout failed");
+      if (planId === 'project') {
+        window.location.href = 'https://buy.stripe.com/aFa00j7Eb0Mg1hL7xT0kE00';
+        return;
       }
 
-      const data = await resp.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert("Failed to start checkout.");
+      if (planId === 'enterprise') {
+        window.location.href = 'mailto:sales@thermalai.eu?subject=Enterprise%20Plan%20Inquiry';
+        return;
       }
 
     } catch (e) {
-      console.error("Checkout failed", e);
-      alert("Payment Error: " + e.message);
+      console.error("Selection failed", e);
+      alert("Error: " + e.message);
     }
   };
 
@@ -135,13 +94,36 @@ export default function PlanSelection() {
     <div className="min-h-screen bg-slate-50 pb-20 pt-10 px-4 md:px-6">
       <div className="max-w-7xl mx-auto space-y-12 text-center">
         <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-        {/* ... */}
-        {/* ... (existing JSX) ... */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">Pricing & Plans</h2>
+          <p className="text-lg text-slate-600">Choose the plan that fits your workflow</p>
+        </div>
 
-        <div className="text-center">
-          <Button variant="link" onClick={handleSkip} className="text-slate-400 hover:text-slate-600 text-xs">
-            Skip for now
-          </Button>
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
+          {PLANS.map((plan) => (
+            <div key={plan.id} className={`bg-white p-8 rounded-3xl border shadow-sm transition-all ${plan.popular ? 'border-emerald-500 border-2 shadow-xl transform md:-translate-y-4 relative' : 'border-slate-200 hover:shadow-md'}`}>
+              {plan.popular && <div className="absolute top-4 right-4 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded">POPULAR</div>}
+              <h3 className="text-xl font-bold text-slate-900 mb-2">{plan.name}</h3>
+              <div className="text-4xl font-bold text-slate-900 mb-2">
+                {plan.price} {plan.unit && <span className="text-lg font-normal text-slate-500">{plan.unit}</span>}
+              </div>
+              <p className="text-slate-500 text-sm mb-6 min-h-[40px]">{plan.desc}</p>
+              <ul className="space-y-3 mb-8 text-left min-h-[120px]">
+                {plan.features.map((feature, idx) => (
+                  <li key={idx} className="flex items-start gap-3 text-sm text-slate-700">
+                    <Check className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" /> {feature}
+                  </li>
+                ))}
+              </ul>
+              <Button 
+                variant={plan.variant} 
+                className={`w-full ${plan.popular ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}
+                onClick={() => handleSelect(plan.id)}
+              >
+                {plan.cta}
+              </Button>
+            </div>
+          ))}
         </div>
 
       </div>

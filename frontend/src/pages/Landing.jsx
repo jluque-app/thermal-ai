@@ -45,7 +45,50 @@ export default function Landing() {
                     </div>
                 </div>
             </section>
-
+            {/* Video and Selling Points */}
+            <section className="py-20 bg-slate-900 text-white">
+                <div className="container mx-auto px-6">
+                    <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+                        <div>
+                            <h2 className="text-3xl font-bold text-white mb-6">Make a Smart Retrofit Decision</h2>
+                            <ul className="space-y-4">
+                                <li className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-1"><Zap className="w-4 h-4" /></div>
+                                    <div>
+                                        <h4 className="font-bold text-lg">Fast, Accurate, AI-Driven</h4>
+                                        <p className="text-slate-400 text-sm">Get actionable heat loss estimates instantly.</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0 mt-1"><Check className="w-4 h-4" /></div>
+                                    <div>
+                                        <h4 className="font-bold text-lg">Non-Invasive Drone Imagery</h4>
+                                        <p className="text-slate-400 text-sm">Screens façades and roofs for residential, logistics, and retail buildings efficiently.</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 mt-1"><Check className="w-4 h-4" /></div>
+                                    <div>
+                                        <h4 className="font-bold text-lg">Identify Hidden Issues</h4>
+                                        <p className="text-slate-400 text-sm">Detect thermal bridges and air infiltrations accurately.</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center flex-shrink-0 mt-1"><Check className="w-4 h-4" /></div>
+                                    <div>
+                                        <h4 className="font-bold text-lg">Massive Cost Savings</h4>
+                                        <p className="text-slate-400 text-sm">Evaluate retrofitting costs to maximize your ROI.</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                        <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-700 bg-slate-800 aspect-video flex items-center justify-center">
+                            {/* The video will be embedded here. For now, it's ready. */}
+                            <img src="/marketing_video.webp" alt="ThermalAI Marketing Video" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                        </div>
+                    </div>
+                </div>
+            </section>
             {/* What Is / Is Not */}
             <section className="py-20 bg-white border-y border-slate-100">
                 <div className="container mx-auto px-6">
@@ -132,14 +175,14 @@ export default function Landing() {
                         <div className="bg-white p-8 rounded-3xl border-2 border-emerald-500 shadow-xl relative transform md:-translate-y-4">
                             <div className="absolute top-4 right-4 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded">POPULAR</div>
                             <h3 className="text-xl font-bold text-slate-900 mb-2">Project</h3>
-                            <div className="text-4xl font-bold text-slate-900 mb-2">€99 <span className="text-lg font-normal text-slate-500">/ scan</span></div>
+                            <div className="text-4xl font-bold text-slate-900 mb-2">€9 <span className="text-lg font-normal text-slate-500">/ scan</span></div>
                             <p className="text-slate-500 text-sm mb-6">For professionals needing client-ready documentation</p>
                             <ul className="space-y-3 mb-8">
                                 {["Volume packs available", "Full heat-loss quantification", "Professional PDF reports", "ThermalAI Expert access included"].map(i => (
                                     <li key={i} className="flex items-center gap-3 text-slate-700 font-medium text-sm"><Check className="w-4 h-4 text-emerald-500" /> {i}</li>
                                 ))}
                             </ul>
-                            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => navigate('/PlanSelection')}>Choose Project</Button>
+                            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => window.location.href = 'https://buy.stripe.com/aFa00j7Eb0Mg1hL7xT0kE00'}>Choose Project</Button>
                         </div>
 
                         {/* Enterprise */}
