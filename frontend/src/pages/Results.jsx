@@ -52,13 +52,12 @@ export default function Results() {
     if (!payload) return;
 
     try {
-      // Use absolute backend URL (no proxy guaranteed on manual Render deploys)
-      const backendUrl = "https://thermal-ai.onrender.com";
-      let endpoint = `${backendUrl}/v1/report/ppt`;
+      // Use relative URL to leverage Vercel rewrites and avoid CORS issues
+      let endpoint = `/v1/report/ppt`;
 
       // If PDF, use the same endpoint but with ?format=pdf to trigger LibreOffice conversion
       if (format === 'pdf') {
-        endpoint = `${backendUrl}/v1/report/ppt?format=pdf`;
+        endpoint = `/v1/report/ppt?format=pdf`;
       }
       // Helper to fetch and convert path to base64 if needed
       const ensureBase64 = async (val) => {
@@ -233,10 +232,7 @@ export default function Results() {
     }
   };
 
-  const handleExportPDF = () => {
-    // Backend LibreOffice conversion is unavailable. Native browser print is the cleanest way.
-    window.print();
-  };
+  const handleExportPDF = () => handleExport('pdf');
   const handleExportPPT = () => handleExport('pptx');
 
   if (!payload) {
