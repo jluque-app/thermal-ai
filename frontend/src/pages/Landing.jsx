@@ -38,6 +38,7 @@ export default function Landing() {
 
             {/* Hero Section */}
             <section className="relative pt-20 pb-32 overflow-hidden">
+                {/* Background video */}
                 <div className="absolute inset-0 z-0 bg-slate-900">
                     <video 
                         ref={videoRef}
@@ -48,16 +49,16 @@ export default function Landing() {
                         className="w-full h-full object-cover opacity-50"
                         src={`/videos/Final_Marketing_Video_${videoLang}.mp4`}
                     />
-                    {/* Unmute/Mute Button — fixed for mobile */}
-                    <button 
-                        onClick={toggleMute}
-                        className="absolute top-28 right-4 z-20 bg-black/60 hover:bg-black/80 active:bg-black/90 text-white p-3 md:p-3 rounded-full backdrop-blur-md transition-all border border-white/20 touch-manipulation"
-                        aria-label="Toggle Mute"
-                        style={{ WebkitTapHighlightColor: 'transparent' }}
-                    >
-                        {isMuted ? <VolumeX className="w-5 h-5 md:w-6 md:h-6" /> : <Volume2 className="w-5 h-5 md:w-6 md:h-6" />}
-                    </button>
                 </div>
+                {/* Mute button — OUTSIDE z-0 container so it's never clipped on mobile */}
+                <button 
+                    onClick={toggleMute}
+                    className="absolute top-24 right-4 z-30 bg-black/60 hover:bg-black/80 active:bg-black/90 text-white p-3 rounded-full transition-all border border-white/20 touch-manipulation"
+                    aria-label="Toggle Mute"
+                    style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                >
+                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                </button>
                 <div className="container mx-auto px-6 relative z-10">
                     <div className="max-w-4xl mx-auto text-center space-y-6">
                         <p className="text-sm font-bold tracking-widest text-emerald-400 drop-shadow-lg uppercase">BY ALLRETECH</p>
