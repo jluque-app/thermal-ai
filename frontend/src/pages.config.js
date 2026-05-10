@@ -21,7 +21,7 @@ const PAGES = {
     "BillingSuccess": BillingSuccess,
     "Dashboard": Dashboard,
     "ExpertPreview": ExpertPreview,
-    "Home": Home,
+    "Home": Landing,
     "Landing": Landing,
     "Index": Index,
     "NewAnalysis": NewAnalysis,
