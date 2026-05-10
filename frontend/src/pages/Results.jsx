@@ -236,11 +236,6 @@ export default function Results() {
     }
   };
 
-  const handleExportPDF = () => {
-    // Render free-tier RAM is strictly 512MB. LibreOffice conversion causes an OOM crash.
-    // Reverting to native browser print dialog for stability.
-    window.print();
-  };
   const handleExportPPT = () => handleExport('pptx');
 
   if (!payload) {
@@ -284,11 +279,8 @@ export default function Results() {
                 {isSaving ? "Saving..." : (user.email === 'jaime@allretech.org' ? "Add to Pilot Map" : "Save to Dashboard")}
               </Button>
             )}
-            <Button variant="outline" onClick={handleExportPPT} className="border-slate-300 text-slate-700 hover:bg-slate-50">
+            <Button onClick={handleExportPPT} className="bg-emerald-600 text-white hover:bg-emerald-700 font-bold">
               <Presentation className="w-4 h-4 mr-2" /> Export PPT
-            </Button>
-            <Button onClick={handleExportPDF} className="bg-emerald-600 text-white hover:bg-emerald-700 font-bold">
-              <FileText className="w-4 h-4 mr-2" /> Export PDF
             </Button>
           </div>
         </div>
