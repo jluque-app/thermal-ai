@@ -18,8 +18,14 @@ export default function Landing() {
 
     const toggleMute = () => {
         if (videoRef.current) {
-            videoRef.current.muted = !videoRef.current.muted;
-            setIsMuted(videoRef.current.muted);
+            const newMuted = !videoRef.current.muted;
+            videoRef.current.muted = newMuted;
+            setIsMuted(newMuted);
+            // On mobile (iOS/Android), autoPlay keeps video paused until user gesture.
+            // Calling play() here ensures the video starts when the user first taps.
+            if (!newMuted && videoRef.current.paused) {
+                videoRef.current.play().catch(() => {});
+            }
         }
     };
 
@@ -42,13 +48,14 @@ export default function Landing() {
                         className="w-full h-full object-cover opacity-50"
                         src={`/videos/Final_Marketing_Video_${videoLang}.mp4`}
                     />
-                    {/* Unmute Button */}
+                    {/* Unmute/Mute Button — fixed for mobile */}
                     <button 
                         onClick={toggleMute}
-                        className="absolute top-28 right-6 z-20 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-md transition-all border border-white/10"
+                        className="absolute top-28 right-4 z-20 bg-black/60 hover:bg-black/80 active:bg-black/90 text-white p-3 md:p-3 rounded-full backdrop-blur-md transition-all border border-white/20 touch-manipulation"
                         aria-label="Toggle Mute"
+                        style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
-                        {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                        {isMuted ? <VolumeX className="w-5 h-5 md:w-6 md:h-6" /> : <Volume2 className="w-5 h-5 md:w-6 md:h-6" />}
                     </button>
                 </div>
                 <div className="container mx-auto px-6 relative z-10">
