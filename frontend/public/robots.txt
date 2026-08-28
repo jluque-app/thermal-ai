@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /Results
+Disallow: /Dashboard
+Sitemap: https://thermalai.eu/sitemap.xml

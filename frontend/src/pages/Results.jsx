@@ -4,13 +4,87 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 
 import { Button } from "@/components/ui/button";
-import { Download, Share2, ArrowLeft, Zap, TrendingUp, AlertTriangle, CloudFog, Coins, FileText, Presentation } from "lucide-react";
+import { Download, Share2, ArrowLeft, Zap, TrendingUp, AlertTriangle, CloudFog, Coins, FileText, Presentation, Crosshair, ShieldCheck, ShieldAlert, Info } from "lucide-react";
 
 function formatNumber(n, decimals = 0) {
   if (n === null || n === undefined) return "—";
   const x = typeof n === "string" ? Number(n.replace(/,/g, '')) : n;
   if (typeof x !== "number" || Number.isNaN(x)) return "—";
   return x.toLocaleString(undefined, { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
+}
+
+const REG_METHOD_LABELS = {
+  sift_ecc_pyramid: "Feature match + sub-pixel refinement",
+  sift_magsac: "Feature match (robust homography)",
+  sensor_prior: "Camera geometry prior (no feature match)",
+  rescale_fallback: "Plain rescale (no camera prior)",
+  resize_only: "Plain resize (registration disabled)",
+};
+
+function AlignmentQualityCard({ registration, flags, overlayB64, rgbB64 }) {
+  const [opacity, setOpacity] = useState(0.6);
+  if (!registration) return null;
+  const reliable = !!registration.reliable;
+  const label = registration.quality_label || (reliable ? "high" : "poor");
+  const toneClass = reliable
+    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+    : label === "prior_only" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-red-50 text-red-700 border-red-200";
+  const Icon = reliable ? ShieldCheck : ShieldAlert;
+  const score = registration.alignment_score_final;
+  const gain = registration.alignment_gain;
+  const cov = registration.support_coverage;
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <Crosshair className="w-5 h-5 text-emerald-600" /> Image Alignment &amp; Data Quality
+        </h3>
+        <span className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${toneClass}`}>
+          <Icon className="w-4 h-4" /> {label === "prior_only" ? "camera prior" : label}
+        </span>
+      </div>
+      <div className="p-6 grid md:grid-cols-2 gap-8">
+        <div className="space-y-3 text-sm text-slate-600">
+          <p>
+            The thermal image was aligned to the RGB photo using
+            <strong> {REG_METHOD_LABELS[registration.method] || registration.method}</strong>
+            {registration.engine_version ? <span className="text-slate-400"> (engine v{registration.engine_version})</span> : null}.
+          </p>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <dt className="text-slate-500">Verified by features</dt><dd className="font-semibold text-slate-900">{reliable ? "Yes" : "No"}</dd>
+            <dt className="text-slate-500">Matched keypoints</dt><dd className="font-semibold text-slate-900">{registration.inliers ?? "—"}</dd>
+            <dt className="text-slate-500">Alignment score</dt>
+            <dd className="font-semibold text-slate-900">{score == null ? "—" : formatNumber(score, 2)}{gain != null && gain !== 0 ? <span className={gain > 0 ? "text-emerald-600" : "text-red-600"}> ({gain > 0 ? "+" : ""}{formatNumber(gain, 2)} vs prior)</span> : null}</dd>
+            <dt className="text-slate-500">Thermal coverage of photo</dt><dd className="font-semibold text-slate-900">{cov == null ? "—" : `${formatNumber(cov * 100, 1)} %`}</dd>
+            <dt className="text-slate-500">Camera prior</dt><dd className="font-semibold text-slate-900">{registration.prior_source || "—"}</dd>
+          </dl>
+          {Array.isArray(flags) && flags.length > 0 && (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900">
+              <p className="font-semibold flex items-center gap-1 mb-1"><Info className="w-4 h-4" /> Read before using these numbers</p>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                {flags.map((f, i) => <li key={i}>{String(f)}</li>)}
+              </ul>
+            </div>
+          )}
+          <p className="text-xs text-slate-400 pt-2">
+            ThermalAI is a screening instrument: the values on this page prioritise buildings for detailed
+            inspection. They are not a certified U-value measurement (ISO 9869-1) or an energy performance certificate.
+          </p>
+        </div>
+        <div className="space-y-2">
+          <p className="text-xs text-slate-500 uppercase font-semibold">Registered thermal overlay</p>
+          <div className="relative aspect-[4/3] bg-slate-900 rounded-lg overflow-hidden border border-slate-200">
+            {rgbB64 ? <img src={rgbB64} className="absolute inset-0 w-full h-full object-cover" alt="RGB" /> : null}
+            {overlayB64 ? <img src={overlayB64} style={{ opacity }} className="absolute inset-0 w-full h-full object-cover" alt="Thermal overlay" /> : null}
+            {!overlayB64 && <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No overlay available</div>}
+          </div>
+          <label className="flex items-center gap-3 text-xs text-slate-500">
+            RGB <input type="range" min="0" max="1" step="0.05" value={opacity} onChange={(e) => setOpacity(Number(e.target.value))} className="flex-1 accent-emerald-600" /> Thermal
+          </label>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function Results() {
@@ -27,6 +101,9 @@ export default function Results() {
 
   const report = payload?.report || null;
   const meta = report?.meta || {};
+  const registration = payload?.raw?.inputs?.registration || meta?.registration || null;
+  const analysisFlags = payload?.raw?.inputs?.analysis_flags || meta?.analysis_flags || [];
+  const overlayB64 = report?.images?.overlay_png_base64 || payload?.raw?.artifacts?.overlay_image_base64_png || null;
 
   // Images
   const rgbB64 = report?.images?.rgb_png_base64 || payload?.raw?.artifacts?.rgb_image_base64_png || payload?.rgb_base64 || null;
@@ -362,6 +439,9 @@ export default function Results() {
             </div>
           </div>
         </div>
+
+        {/* ALIGNMENT & DATA QUALITY */}
+        <AlignmentQualityCard registration={registration} flags={analysisFlags} overlayB64={b64img(overlayB64)} rgbB64={b64img(rgbB64)} />
 
         {/* HEAT LOSS BREAKDOWN */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
