@@ -192,6 +192,47 @@ export default function Landing() {
                 </div>
             </section>
 
+            {/* Science & method */}
+            <section id="method" className="py-24 bg-white border-t border-slate-100">
+                <div className="container mx-auto px-6">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="text-center mb-14">
+                            <p className="text-sm font-bold tracking-widest text-emerald-600 uppercase mb-3">{t('method_kicker') || 'Transparent by design'}</p>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">{t('method_title') || 'How ThermalAI turns two drone images into a retrofit priority'}</h2>
+                            <p className="text-lg text-slate-600 max-w-3xl mx-auto">{t('method_sub') || 'Every step is deterministic and auditable. Each report shows which alignment method was used, an independent alignment score, and any condition that makes the estimate less reliable.'}</p>
+                        </div>
+                        <div className="grid md:grid-cols-4 gap-6">
+                            {[
+                                { n: '1', title: t('method_s1') || 'Align', body: t('method_s1_d') || 'The thermal image is matched to the RGB photo using the camera geometry, robust feature matching and sub-pixel refinement. A candidate alignment is only accepted if it verifiably improves on the camera prior.' },
+                                { n: '2', title: t('method_s2') || 'Isolate the facade', body: t('method_s2_d') || 'A segmentation network separates walls, windows and doors from sky, ground, trees and vehicles, so only the building envelope is analysed.' },
+                                { n: '3', title: t('method_s3') || 'Flag anomalies', body: t('method_s3_d') || 'The warmest areas inside the facade are flagged relative to the rest of the same facade, never against the whole picture.' },
+                                { n: '4', title: t('method_s4') || 'Estimate & rank', body: t('method_s4_d') || 'Flagged area, capture-time temperatures and local heating degree-hours give a screening-level annual heat-loss proxy in kWh and euros, with explicit assumptions.' },
+                            ].map(step => (
+                                <div key={step.n} className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                                    <div className="w-10 h-10 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center mb-4">{step.n}</div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-2">{step.title}</h3>
+                                    <p className="text-sm text-slate-600 leading-relaxed">{step.body}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-10 grid md:grid-cols-3 gap-6 text-sm">
+                            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-6">
+                                <h4 className="font-bold text-emerald-900 mb-2">{t('method_pilot') || 'Tested on real flights'}</h4>
+                                <p className="text-emerald-900/80">{t('method_pilot_d') || 'Developed with a UAV pilot on six buildings in Győr and Mosonmagyaróvár (Hungary) flown with a DJI Matrice 300 RTK and Zenmuse H20T dual sensor, and being prepared for peer-reviewed publication.'}</p>
+                            </div>
+                            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+                                <h4 className="font-bold text-slate-900 mb-2">{t('method_epbd') || 'Built for the EPBD 2024 recast'}</h4>
+                                <p className="text-slate-600">{t('method_epbd_d') || 'Municipalities and portfolio owners must prioritise renovations at scale. ThermalAI is a triage layer that tells you where a certified audit is worth its cost.'}</p>
+                            </div>
+                            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+                                <h4 className="font-bold text-slate-900 mb-2">{t('method_limits') || 'Honest about limits'}</h4>
+                                <p className="text-slate-600">{t('method_limits_d') || 'Not an EPC, not a U-value measurement, not a substitute for an on-site audit. Read the'} <a href="/Legal#method" className="text-emerald-700 underline">{t('method_limits_link') || 'method & limitations'}</a>.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Pricing */}
             <section id="pricing" className="py-24 bg-slate-50">
                 <div className="container mx-auto px-6">

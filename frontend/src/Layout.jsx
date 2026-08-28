@@ -260,17 +260,18 @@ export default function Layout({ children, currentPageName }) {
             <div>
               <h4 className="text-white font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-sm text-slate-400">
-                <li><a href="#" className="hover:text-brand-teal-500">Expert AI</a></li>
-                <li><a href="#" className="hover:text-brand-teal-500">Analysis App</a></li>
-                <li><a href="#" className="hover:text-brand-teal-500">Reporting</a></li>
+                <li><a href="/ExpertPreview" className="hover:text-brand-teal-500">Expert AI</a></li>
+                <li><a href="/Transition" className="hover:text-brand-teal-500">Analysis App</a></li>
+                <li><a href="/PlanSelection" className="hover:text-brand-teal-500">Pricing</a></li>
+                <li><a href="/Legal#method" className="hover:text-brand-teal-500">Method &amp; limitations</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm text-slate-400">
-                <li><a href="#" className="hover:text-brand-teal-500">About</a></li>
-                <li><a href="#" className="hover:text-brand-teal-500">Contact</a></li>
-                <li><a href="#" className="hover:text-brand-teal-500">Privacy Policy</a></li>
+                <li><a href="/Legal#imprint" className="hover:text-brand-teal-500">About / Imprint</a></li>
+                <li><a href="mailto:info@allretech.org" className="hover:text-brand-teal-500">Contact</a></li>
+                <li><a href="/Legal#privacy" className="hover:text-brand-teal-500">Privacy Policy</a></li>
               </ul>
             </div>
             <div>
@@ -281,8 +282,9 @@ export default function Layout({ children, currentPageName }) {
           <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
             <p>© 2026 ThermalAI. All rights reserved.</p>
             <div className="flex gap-4">
-              <a href="#" className="hover:text-slate-300">Terms</a>
-              <a href="#" className="hover:text-slate-300">Privacy</a>
+              <a href="/Legal#terms" className="hover:text-slate-300">Terms</a>
+              <a href="/Legal#privacy" className="hover:text-slate-300">Privacy</a>
+              <a href="/Legal#imprint" className="hover:text-slate-300">Imprint</a>
             </div>
           </div>
         </div>
