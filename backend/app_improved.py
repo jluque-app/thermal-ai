@@ -125,13 +125,30 @@ from thermal_core_improved import (
     detect_hotspot_mask,
     overlay_mask_on_rgb,
     encode_image_to_base64_png,
+    calculate_external_heat_transfer_coefficient,
     instantaneous_loss_proxy_watts,
     annualize_proxy_kwh,
     infer_u_value,
     annual_kwh_saved_u_method,
     annual_total_loss_u_method,
     compute_multi_year_costs,
+    MIN_RELIABLE_DELTA_T_C,
 )
+
+# Audited multi-modal registration engine (registration_engine.py, v2)
+try:
+    from registration_engine import MultiModalImageAligner, ENGINE_VERSION as REGISTRATION_ENGINE_VERSION
+    HAVE_REGISTRATION_ENGINE = True
+except Exception as _reg_exc:  # pragma: no cover
+    print("WARNING: registration_engine unavailable:", repr(_reg_exc))
+    MultiModalImageAligner = None
+    REGISTRATION_ENGINE_VERSION = None
+    HAVE_REGISTRATION_ENGINE = False
+
+BACKEND_VERSION = "v2026.08.28-audit-integration"
+DEFAULT_KAPPA_CALIBRATION = 0.05   # dimensionless screening calibration constant
+DEFAULT_WIND_SPEED_M_S = 1.5
+
 from climate_data_improved import get_outdoor_temperature_c, degree_hours_below_base
 from report_template_improved import build_gamma_payload
 from report_builder import build_report
@@ -381,172 +398,64 @@ def _bgr_to_pil(arr: np.ndarray) -> Image.Image:
     return Image.fromarray(cv2.cvtColor(arr, cv2.COLOR_BGR2RGB))
 
 
-def _edges_for_ecc(bgr: np.ndarray) -> np.ndarray:
-    """Edge-enhanced representation for ECC alignment."""
-    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
-    # light contrast equalization
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    gray = clahe.apply(gray)
-    gray = cv2.GaussianBlur(gray, (5, 5), 0)
-    edges = cv2.Canny(gray, 60, 150)
-    edges = cv2.dilate(edges, None, iterations=1)
-    return edges
-
-
-def _try_ecc_homography(ref_edges: np.ndarray, mov_edges: np.ndarray):
-    """Try ECC-based homography on edge images. Return (H, corr) or (None, None)."""
-    try:
-        H_init = np.eye(3, dtype=np.float32)
-        cc, H = cv2.findTransformECC(
-            ref_edges,
-            mov_edges,
-            H_init,
-            cv2.MOTION_HOMOGRAPHY,
-            (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 2000, 1e-6),
-        )
-        return H, float(cc)
-    except Exception:
-        return None, None
-
-
-def _try_orb_homography(ref_gray: np.ndarray, mov_gray: np.ndarray):
-    """Try ORB + RANSAC. Return (H, inlier_ratio) or (None, None)."""
-    orb = cv2.ORB_create(3000)
-
-    k1, d1 = orb.detectAndCompute(ref_gray, None)
-    k2, d2 = orb.detectAndCompute(mov_gray, None)
-    if d1 is None or d2 is None or len(k1) < 20 or len(k2) < 20:
-        return None, None
-
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING)
-    matches = bf.knnMatch(d1, d2, k=2)
-    good = []
-    for m, n in matches:
-        if m.distance < 0.75 * n.distance:
-            good.append(m)
-
-    if len(good) < 30:
-        return None, None
-
-    pts1 = np.float32([k1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
-    pts2 = np.float32([k2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
-
-    H, mask = cv2.findHomography(pts2, pts1, cv2.RANSAC, 5.0)
-    if H is None or mask is None:
-        return None, None
-
-    inliers = float(mask.sum())
-    inlier_ratio = inliers / float(len(mask))
-    return H, inlier_ratio
-
-
 def register_thermal_to_rgb(vis_img: Image.Image, thr_img: Image.Image):
     """
-    Align thermal → RGB using ECC first, then ORB, then fall back to resize.
+    Align thermal -> RGB with the audited MultiModalImageAligner (registration_engine.py).
 
     Returns:
-        aligned_thermal (PIL.Image), registration_meta (dict)
+        aligned_thermal (PIL.Image), valid_support_mask (np.ndarray bool, RGB frame),
+        registration_meta (dict) with stage outcome, quality flags and diagnostics.
     """
-    def _quality_from_score(method: str, score: Optional[float]) -> Tuple[str, bool]:
-        """
-        Map a method + score to a qualitative label and a 'reliable' flag.
-        This is purely heuristic and can be tweaked later.
-        """
-        if score is None:
-            return "unknown", False
+    if HAVE_REGISTRATION_ENGINE and cv2 is not None:
+        aligner = MultiModalImageAligner()
+        res = aligner.register(vis_img, thr_img)
+        md = res.metadata or {}
+        score = md.get("alignment_score_final")
+        if res.is_reliable and (score is None or score >= 0.30):
+            quality_label = "high"
+        elif res.is_reliable:
+            quality_label = "medium"
+        elif md.get("prior_source") in ("identity_same_dims", "exif_f35") or str(md.get("prior_source", "")).startswith("camera_table"):
+            quality_label = "prior_only"
+        else:
+            quality_label = "poor"
+        meta = {
+            "engine_version": md.get("engine_version"),
+            "used": bool(res.is_reliable),
+            "method": res.method_used,
+            "confidence": res.confidence_score,
+            "reliable": bool(res.is_reliable),
+            "quality_label": quality_label,
+            "inliers": int(res.inlier_count),
+            "matrix": res.homography_matrix.tolist() if res.homography_matrix is not None else None,
+            "prior_source": md.get("prior_source"),
+            "prior_scale": md.get("prior_scale"),
+            "final_scale": md.get("final_scale"),
+            "alignment_score_prior": md.get("alignment_score_prior"),
+            "alignment_score_final": md.get("alignment_score_final"),
+            "alignment_gain": md.get("alignment_gain"),
+            "support_coverage": md.get("support_coverage"),
+            "ecc_completed_levels": md.get("ecc_completed_levels"),
+            "ecc_diagnostics": md.get("ecc_diagnostics"),
+            "rejections": md.get("rejections"),
+            "rgb_model": md.get("rgb_model"),
+            "thermal_model": md.get("thermal_model"),
+            "target_registration_error": None,   # only measurable against ground-truth landmarks
+        }
+        return res.aligned_thermal_pil, res.valid_support_mask, meta
 
-        if method == "ecc":
-            # ECC correlation is roughly 0–1
-            if score >= 0.30:
-                return "high", True
-            if score >= 0.10:
-                return "medium", True
-            return "low", False
-
-        if method == "orb":
-            # inlier_ratio is 0–1
-            if score >= 0.60:
-                return "high", True
-            if score >= 0.40:
-                return "medium", True
-            return "low", False
-
-        # Fallback / resize_only
-        return "poor", False
-
+    # Engine unavailable: plain resize with an honest "poor" flag.
+    resized = thr_img.resize(vis_img.size, Image.Resampling.BILINEAR)
+    valid_mask = np.ones((vis_img.size[1], vis_img.size[0]), dtype=bool)
     meta = {
-        "used": False,
-        "method": "none",
-        "confidence": None,
-        "ecc_corr": None,
-        "orb_inlier_ratio": None,
-        "quality_label": "unknown",
-        "reliable": False,
+        "engine_version": None, "used": False, "method": "resize_only", "confidence": None,
+        "reliable": False, "quality_label": "poor", "inliers": 0, "matrix": None,
+        "prior_source": None, "alignment_score_prior": None, "alignment_score_final": None,
+        "alignment_gain": None, "support_coverage": 1.0, "ecc_completed_levels": 0,
+        "ecc_diagnostics": [], "rejections": ["registration engine not available"],
+        "target_registration_error": None,
     }
-
-    # If OpenCV isn't available, gracefully fall back to simple resize (old behaviour).
-    # If OpenCV isn't available, gracefully fall back to simple resize (old behaviour).
-    if cv2 is None:
-        resized = thr_img.resize(vis_img.size)
-        meta.update({
-            "method": "resize_only",
-            "used": False,
-            "confidence": None,
-            "quality_label": "poor",
-            "reliable": False,
-        })
-        return resized, meta
-
-    ref_bgr = _pil_to_bgr(vis_img)
-    mov_bgr = cv2.resize(_pil_to_bgr(thr_img), (ref_bgr.shape[1], ref_bgr.shape[0]))
-
-    # 1) ECC on edges
-    ref_edges = _edges_for_ecc(ref_bgr)
-    mov_edges = _edges_for_ecc(mov_bgr)
-    H_ecc, corr = _try_ecc_homography(ref_edges, mov_edges)
-    if H_ecc is not None and corr is not None and corr >= 0.10:
-        warped = cv2.warpPerspective(mov_bgr, H_ecc, (ref_bgr.shape[1], ref_bgr.shape[0]))
-        q_label, reliable = _quality_from_score("ecc", corr)
-        meta.update({
-            "used": True,
-            "method": "ecc",
-            "confidence": corr,
-            "ecc_corr": corr,
-            "quality_label": q_label,
-            "reliable": reliable,
-        })
-        return _bgr_to_pil(warped), meta
-
-
-    # 2) ORB + RANSAC
-    ref_gray = cv2.cvtColor(ref_bgr, cv2.COLOR_BGR2GRAY)
-    mov_gray = cv2.cvtColor(mov_bgr, cv2.COLOR_BGR2GRAY)
-    H_orb, inlier_ratio = _try_orb_homography(ref_gray, mov_gray)
-    if H_orb is not None and inlier_ratio is not None and inlier_ratio >= 0.40:
-        warped = cv2.warpPerspective(mov_bgr, H_orb, (ref_bgr.shape[1], ref_bgr.shape[0]))
-        q_label, reliable = _quality_from_score("orb", inlier_ratio)
-        meta.update({
-            "used": True,
-            "method": "orb",
-            "confidence": inlier_ratio,
-            "orb_inlier_ratio": inlier_ratio,
-            "quality_label": q_label,
-            "reliable": reliable,
-        })
-        return _bgr_to_pil(warped), meta
-
-
-    # 3) Fallback: simple resize only (current behaviour)
-    resized = cv2.resize(mov_bgr, (ref_bgr.shape[1], ref_bgr.shape[0]))
-    q_label, reliable = _quality_from_score("resize_only", None)
-    meta.update({
-        "method": "resize_only",
-        "used": False,
-        "confidence": None,
-        "quality_label": q_label,
-        "reliable": reliable,
-    })
-    return _bgr_to_pil(resized), meta
+    return resized, valid_mask, meta
 
 
 
@@ -1691,29 +1600,30 @@ async def analyze(
     vis_img = _resize_max(vis_img, max_side=1024)
     thr_img = _resize_max(thr_img, max_side=1024)
 
-    # >>> KEY CHANGE: thermal → RGB registration
+    # >>> thermal -> RGB registration (audited engine) with interpolation support mask
     if _safe_bool(auto_register, default=True) and CV2_AVAILABLE:
-        thr_img, registration_meta = register_thermal_to_rgb(vis_img, thr_img)
+        thr_img, valid_support_mask, registration_meta = register_thermal_to_rgb(vis_img, thr_img)
     else:
-        # maintain old behavior if disabled
-        thr_img = thr_img.resize(vis_img.size)
+        # registration disabled by caller: plain resize, whole frame treated as supported
+        thr_img = thr_img.resize(vis_img.size, Image.Resampling.BILINEAR)
+        valid_support_mask = np.ones((vis_img.size[1], vis_img.size[0]), dtype=bool)
         registration_meta = {
-            "used": False,
-            "method": "resize_only",
-            "confidence": None,
+            "used": False, "method": "resize_only", "confidence": None, "reliable": False,
+            "quality_label": "poor", "support_coverage": 1.0, "rejections": ["auto_register disabled"],
         }
 
-    # Segmentation + hotspot
+    # Segmentation; the active analysis region is facade AND valid interpolation support.
+    # Threshold statistics are computed strictly inside this region (never on the whole frame).
     seg = SEG_MODEL.predict_masks(vis_img)
-    hs = detect_hotspot_mask(thr_img, threshold_percentile=overlay_pct)
-
-    # -----------------------------
-    # CLIP hotspots to façade only
-    # -----------------------------
-    # This removes ground / street / cars from hotspot boxes
-    facade_mask = seg.wall_mask | seg.window_mask | seg.door_mask
-    hs.mask = hs.mask & facade_mask
-
+    facade_mask = (seg.wall_mask | seg.window_mask | seg.door_mask) & valid_support_mask
+    hs = detect_hotspot_mask(thr_img, threshold_percentile=overlay_pct, active_analysis_mask=facade_mask)
+    analysis_flags: List[str] = []
+    if hs.status == "empty_active_mask":
+        analysis_flags.append("empty_active_region: no facade pixels with valid thermal support; hotspot statistics not computed")
+    elif hs.status == "flat_image":
+        analysis_flags.append("flat_thermal_image: no thermal contrast inside the active region")
+    if not registration_meta.get("reliable", False):
+        analysis_flags.append(f"registration_not_verified: method={registration_meta.get('method')} ({registration_meta.get('quality_label')})")
 
     # Artifacts
     overlay_b64 = None
@@ -1790,7 +1700,24 @@ async def analyze(
         sys.stderr.write(f"DEBUG: Failed to log hotspot stats: {e}\n")
     # ----------------------------
 
-    masks = {"wall": seg.wall_mask, "window": seg.window_mask, "door": seg.door_mask}
+    # External combined heat-transfer coefficient from the reported wind speed and the
+    # outdoor air temperature (surface assumed at outdoor air temperature for screening).
+    wind_for_h = _safe_float(wind_speed_mps)
+    wind_for_h = DEFAULT_WIND_SPEED_M_S if wind_for_h is None else max(0.1, wind_for_h)
+    h_ext = calculate_external_heat_transfer_coefficient(
+        wind_speed_m_s=wind_for_h, surface_temp_k=float(T_outside) + 273.15
+    )
+    if delta_t_capture < MIN_RELIABLE_DELTA_T_C:
+        analysis_flags.append(
+            f"low_delta_t_capture: indoor-outdoor difference {delta_t_capture:.1f} K below {MIN_RELIABLE_DELTA_T_C:.0f} K; annualised proxy unreliable"
+        )
+
+    # Component masks restricted to the same active region used for the statistics
+    masks = {
+        "wall": seg.wall_mask & valid_support_mask,
+        "window": seg.window_mask & valid_support_mask,
+        "door": seg.door_mask & valid_support_mask,
+    }
 
     components: Dict[str, Any] = {}
     totals = {
@@ -1819,8 +1746,16 @@ async def analyze(
             hs_area_m2 = float(comp_area[name]) * float(hs_ratio_in_comp)
             hs_area_src = "component_area_x_hotspot_ratio"
 
-        inst_w = instantaneous_loss_proxy_watts(hs_area_m2, T_inside, T_outside)
-        annual_kwh_delta = annualize_proxy_kwh(inst_w, delta_t_capture, deg_hours)
+        inst_w = instantaneous_loss_proxy_watts(
+            hs_area_m2, T_inside, T_outside, kappa_calibration=DEFAULT_KAPPA_CALIBRATION, h_ext=h_ext
+        )
+        ann = annualize_proxy_kwh(inst_w, delta_t_capture, deg_hours)
+        annual_kwh_delta = ann.annual_kwh
+        if not ann.valid and ann.status != "zero_loss":
+            for w in (ann.warnings or [ann.status]):
+                msg = f"{name}: {w}"
+                if msg not in analysis_flags:
+                    analysis_flags.append(msg)
 
         if name == "wall":
             u_cur = _safe_float(u_current_wall) or infer_u_value(material_current_wall)
@@ -1870,7 +1805,22 @@ async def analyze(
 
     totals = {k: (round(v, 4) if "kwh" in k or "watts" in k else round(v, 2)) for k, v in totals.items()}
     # Use the Theoretical Total Cost for the multi-year projection
-    totals["multi_year_costs_delta"] = compute_multi_year_costs(totals["annual_cost_theoretical"], discount_rate=dr)
+    # Multi-year projection: contract is (annual kWh, price per kWh, inflation, discount)
+    totals["multi_year_costs_delta"] = compute_multi_year_costs(
+        totals["annual_kwh_theoretical"], energy_price_per_kwh=fuel_price, inflation_rate=ir, discount_rate=dr
+    )
+    totals["multi_year_costs_hotspot_proxy"] = compute_multi_year_costs(
+        totals["annual_kwh_delta"], energy_price_per_kwh=fuel_price, inflation_rate=ir, discount_rate=dr
+    )
+    totals["physics_assumptions"] = {
+        "kappa_calibration": DEFAULT_KAPPA_CALIBRATION,
+        "h_ext_w_per_m2k": round(h_ext, 3),
+        "wind_speed_m_s_used": wind_for_h,
+        "delta_t_capture_c": round(delta_t_capture, 3),
+        "hotspot_status": hs.status,
+        "hotspot_threshold_gray": round(float(hs.threshold), 2),
+        "active_region_pixels": int(hs.total_pixels),
+    }
 
     analysis_id = uuid.uuid4().hex[:10]
     api_base = "" # Let frontend handle base URL via proxy
@@ -1915,8 +1865,11 @@ async def analyze(
             "google_maps_link": google_maps_link,
             "important_note": important_note,
 
-            # NEW: make registration diagnostics visible to frontend / report
+            # registration diagnostics + analysis quality flags visible to frontend / report
             "registration": registration_meta,
+            "analysis_flags": analysis_flags,
+            "backend_version": BACKEND_VERSION,
+            "registration_engine_version": REGISTRATION_ENGINE_VERSION,
         },
         "results": {"components": components, "totals": totals},
     }
@@ -1971,7 +1924,8 @@ async def analyze(
 
         # propagate registration meta into meta as well if you want to use it in PPT
         "registration": registration_meta,
-        "version": "v2026.02.11-TotalLossFix", # Force update & verification stamp
+        "analysis_flags": analysis_flags,
+        "version": BACKEND_VERSION,
     })
     report["meta"] = report_meta
 
